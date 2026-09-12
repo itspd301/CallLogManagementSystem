@@ -1,0 +1,46 @@
+@model CallLogManagementSystem.ViewModels.Masters.ShopFormViewModel
+@{
+    ViewData["Title"] = "Add Shop";
+}
+
+<h4 class="mb-3">Add Shop</h4>
+
+<div class="card" style="max-width: 520px;">
+    <div class="card-body">
+        <form asp-controller="Shop" asp-action="Create" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 px-3 small mb-3" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="LocationId" class="form-label"></label>
+                <select asp-for="LocationId" asp-items="Model.LocationOptions" class="form-select">
+                    <option value="">-- Select Location --</option>
+                </select>
+                <span asp-validation-for="LocationId" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Code" class="form-label"></label>
+                <input asp-for="Code" class="form-control text-uppercase" maxlength="20" />
+                <span asp-validation-for="Code" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-controller="Shop" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,246 @@
+@model CallLogManagementSystem.ViewModels.Dashboard.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+
+    string Json(object o) => System.Text.Json.JsonSerializer.Serialize(o);
+
+    string FormatMinutes(double? minutes)
+    {
+        if (!minutes.HasValue) return "-";
+        var ts = TimeSpan.FromMinutes(minutes.Value);
+        return ts.TotalDays >= 1 ? $"{(int)ts.TotalDays}d {ts.Hours}h" : $"{ts.Hours}h {ts.Minutes}m";
+    }
+}
+
+<div class="mb-3">
+    <h4 class="mb-0">Dashboard</h4>
+    <div class="text-muted small">@Model.DateFrom?.ToString("dd-MMM-yyyy") &ndash; @Model.DateTo?.ToString("dd-MMM-yyyy")</div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-controller="Dashboard" asp-action="Index" class="row g-2">
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Date From</label>
+                <input type="date" name="dateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Date To</label>
+                <input type="date" name="dateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Location</label>
+                <select name="locationId" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var opt in Model.LocationOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.LocationId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Module</label>
+                <select name="moduleId" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var opt in Model.ModuleOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.ModuleId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Engineer</label>
+                <select name="engineerId" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var opt in Model.EngineerOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.EngineerId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Priority</label>
+                <select name="priorityId" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var opt in Model.PriorityOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.PriorityId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary">Apply Filters</button>
+                <a asp-controller="Dashboard" asp-action="Index" class="btn btn-sm btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@{
+    var kpis = new (string Label, int Value, string Color)[]
+    {
+        ("Total Calls", Model.TotalCalls, "#2c7be5"),
+        ("Open", Model.OpenCount, "#0d6efd"),
+        ("Assigned", Model.AssignedCount, "#6610f2"),
+        ("In Progress", Model.InProgressCount, "#fd7e14"),
+        ("On Hold", Model.OnHoldCount, "#6c757d"),
+        ("Resolved", Model.ResolvedCount, "#20c997"),
+        ("Closed", Model.ClosedCount, "#198754"),
+        ("Reopened", Model.ReopenedCount, "#dc3545"),
+        ("Critical", Model.CriticalCount, "#dc3545"),
+        ("Line Loss", Model.LineLossCount, "#dc3545"),
+        ("SLA Breached", Model.SlaBreachedCount, "#dc3545")
+    };
+}
+
+<div class="row g-2 mb-3">
+    @foreach (var kpi in kpis)
+    {
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+            <div class="card h-100">
+                <div class="card-body py-2 px-3">
+                    <div class="small text-muted text-truncate">@kpi.Label</div>
+                    <div class="fs-4 fw-bold" style="color:@kpi.Color;">@kpi.Value</div>
+                </div>
+            </div>
+        </div>
+    }
+    <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+        <div class="card h-100">
+            <div class="card-body py-2 px-3">
+                <div class="small text-muted text-truncate">Avg Resolution Time</div>
+                <div class="fs-4 fw-bold text-primary">@FormatMinutes(Model.AverageResolutionMinutes)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Calls by Day</div>
+            <div class="card-body"><canvas id="chartCallsByDay" height="90"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Open vs Closed</div>
+            <div class="card-body"><canvas id="chartOpenClosed" height="90"></canvas></div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Calls by Priority</div>
+            <div class="card-body"><canvas id="chartByPriority" height="140"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Calls by Call Type</div>
+            <div class="card-body"><canvas id="chartByCallType" height="140"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Calls by Location</div>
+            <div class="card-body"><canvas id="chartByLocation" height="140"></canvas></div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Calls by Shop</div>
+            <div class="card-body"><canvas id="chartByShop" height="160"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Calls by Module</div>
+            <div class="card-body"><canvas id="chartByModule" height="160"></canvas></div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Calls by Problem Category</div>
+            <div class="card-body"><canvas id="chartByProblemCategory" height="160"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Calls by Engineer</div>
+            <div class="card-body"><canvas id="chartByEngineer" height="160"></canvas></div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Line Loss Minutes by Shop</div>
+            <div class="card-body"><canvas id="chartLineLoss" height="160"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Average Resolution Time by Priority (minutes)</div>
+            <div class="card-body"><canvas id="chartResolutionTime" height="160"></canvas></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chartjs/chart.umd.js"></script>
+    <script>
+        (function () {
+            var palette = ['#2c7be5', '#20c997', '#fd7e14', '#6610f2', '#dc3545', '#0dcaf0', '#6c757d', '#198754', '#ffc107', '#6f42c1', '#d63384', '#0d6efd'];
+            Chart.defaults.font.size = 11;
+            Chart.defaults.plugins.legend.labels.boxWidth = 12;
+
+            function bar(id, labels, data, horizontal) {
+                var ctx = document.getElementById(id);
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: labels, datasets: [{ data: data, backgroundColor: '#2c7be5', borderRadius: 3 }] },
+                    options: {
+                        indexAxis: horizontal ? 'y' : 'x',
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            function doughnut(id, labels, data) {
+                var ctx = document.getElementById(id);
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: { labels: labels, datasets: [{ data: data, backgroundColor: palette }] },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+
+            function line(id, labels, data) {
+                var ctx = document.getElementById(id);
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: labels, datasets: [{ data: data, borderColor: '#2c7be5', backgroundColor: 'rgba(44,123,229,0.12)', fill: true, tension: 0.3, pointRadius: 2 }] },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+                });
+            }
+
+            line('chartCallsByDay', @Html.Raw(Json(Model.CallsByDay.Labels)), @Html.Raw(Json(Model.CallsByDay.Data)));
+            doughnut('chartOpenClosed', @Html.Raw(Json(Model.OpenVsClosed.Labels)), @Html.Raw(Json(Model.OpenVsClosed.Data)));
+            doughnut('chartByPriority', @Html.Raw(Json(Model.CallsByPriority.Labels)), @Html.Raw(Json(Model.CallsByPriority.Data)));
+            doughnut('chartByCallType', @Html.Raw(Json(Model.CallsByCallType.Labels)), @Html.Raw(Json(Model.CallsByCallType.Data)));
+            bar('chartByLocation', @Html.Raw(Json(Model.CallsByLocation.Labels)), @Html.Raw(Json(Model.CallsByLocation.Data)), false);
+            bar('chartByShop', @Html.Raw(Json(Model.CallsByShop.Labels)), @Html.Raw(Json(Model.CallsByShop.Data)), true);
+            bar('chartByModule', @Html.Raw(Json(Model.CallsByModule.Labels)), @Html.Raw(Json(Model.CallsByModule.Data)), true);
+            bar('chartByProblemCategory', @Html.Raw(Json(Model.CallsByProblemCategory.Labels)), @Html.Raw(Json(Model.CallsByProblemCategory.Data)), true);
+            bar('chartByEngineer', @Html.Raw(Json(Model.CallsByEngineer.Labels)), @Html.Raw(Json(Model.CallsByEngineer.Data)), true);
+            bar('chartLineLoss', @Html.Raw(Json(Model.LineLossByShop.Labels)), @Html.Raw(Json(Model.LineLossByShop.Data)), true);
+            bar('chartResolutionTime', @Html.Raw(Json(Model.ResolutionTimeByPriority.Labels)), @Html.Raw(Json(Model.ResolutionTimeByPriority.Data)), true);
+        })();
+    </script>
+}

@@ -1,0 +1,193 @@
+@model CallLogManagementSystem.ViewModels.CallLog.CallLogListViewModel
+@{
+    ViewData["Title"] = Model.PageTitle;
+
+    string SortUrl(string column) => Url.Action("Index", "CallLog", new
+    {
+        search = Model.Search, status = Model.StatusShortcut, statusId = Model.StatusId, priorityId = Model.PriorityId,
+        locationId = Model.LocationId, shopId = Model.ShopId, moduleId = Model.ModuleId,
+        dateFrom = Model.DateFrom?.ToString("yyyy-MM-dd"), dateTo = Model.DateTo?.ToString("yyyy-MM-dd"),
+        sort = column, dir = Model.Sort == column && Model.Dir == "asc" ? "desc" : "asc", page = 1, pageSize = Model.PageSize
+    })!;
+
+    string SortIndicator(string column) => Model.Sort == column ? (Model.Dir == "asc" ? " ▲" : " ▼") : "";
+
+    string FormatTimeTaken(int? minutes)
+    {
+        if (!minutes.HasValue) return "-";
+        var ts = TimeSpan.FromMinutes(minutes.Value);
+        return $"{(int)ts.TotalDays}d {ts.Hours}h {ts.Minutes}m";
+    }
+
+    string PriorityBadge(string color) => $"background-color:{color};color:#fff;";
+
+    // Precomputed into plain variables rather than called inline as @Method("literal") inside
+    // an HTML attribute — Razor's attribute-value parser can misread the quotes inside the
+    // string argument as the attribute's own closing quote, corrupting everything after it
+    // (this was rendering as literal "@SortIndicator(...)" text on the page).
+    var callNumberSortUrl = SortUrl("CallNumber");
+    var callNumberSortIndicator = SortIndicator("CallNumber");
+    var reportedSortUrl = SortUrl("ReportedDateTime");
+    var reportedSortIndicator = SortIndicator("ReportedDateTime");
+    var prioritySortUrl = SortUrl("Priority");
+    var prioritySortIndicator = SortIndicator("Priority");
+    var statusSortUrl = SortUrl("Status");
+    var statusSortIndicator = SortIndicator("Status");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">@Model.PageTitle</h4>
+        <div class="text-muted small">Call Management &rsaquo; @Model.PageTitle</div>
+    </div>
+    <a asp-controller="CallLog" asp-action="Create" class="btn btn-primary btn-sm">+ Create Call</a>
+</div>
+
+@if (TempData["StatusMessage"] is string status)
+{
+    <div class="alert alert-success py-2 px-3 small">@status</div>
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-controller="CallLog" asp-action="Index" class="row g-2">
+            <input type="hidden" name="sort" value="@Model.Sort" />
+            <input type="hidden" name="dir" value="@Model.Dir" />
+            <div class="col-md-3">
+                <input type="text" name="search" value="@Model.Search" class="form-control form-control-sm" placeholder="Search Call # or Description..." />
+            </div>
+            <div class="col-md-2">
+                <select name="statusId" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    @foreach (var opt in Model.StatusOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.StatusId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="priorityId" class="form-select form-select-sm">
+                    <option value="">All Priorities</option>
+                    @foreach (var opt in Model.PriorityOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.PriorityId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="locationId" class="form-select form-select-sm">
+                    <option value="">All Locations</option>
+                    @foreach (var opt in Model.LocationOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.LocationId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-1">
+                <input type="date" name="dateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" title="From" />
+            </div>
+            <div class="col-md-1">
+                <input type="date" name="dateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" title="To" />
+            </div>
+            <div class="col-md-1 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
+                <a asp-controller="CallLog" asp-action="Index" class="btn btn-sm btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th><a class="text-decoration-none text-dark" href="@callNumberSortUrl">Call Number@(callNumberSortIndicator)</a></th>
+                        <th><a class="text-decoration-none text-dark" href="@reportedSortUrl">Reported@(reportedSortIndicator)</a></th>
+                        <th>Location</th>
+                        <th>Shop</th>
+                        <th>Module</th>
+                        <th>Problem</th>
+                        <th>Reported By</th>
+                        <th>Attended By</th>
+                        <th><a class="text-decoration-none text-dark" href="@prioritySortUrl">Priority@(prioritySortIndicator)</a></th>
+                        <th><a class="text-decoration-none text-dark" href="@statusSortUrl">Status@(statusSortIndicator)</a></th>
+                        <th>Line Loss</th>
+                        <th>Time Taken</th>
+                        @if (Model.ShowRelationColumn)
+                        {
+                            <th>Why Mine</th>
+                        }
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr><td colspan="@(Model.ShowRelationColumn ? 13 : 12)" class="text-center text-muted py-4">No calls found.</td></tr>
+                    }
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td><a asp-controller="CallLog" asp-action="Details" asp-route-id="@item.Id" class="fw-semibold text-decoration-none">@item.CallNumber</a></td>
+                            <td>@item.ReportedDateTime.ToString("dd-MMM-yyyy hh:mm tt")</td>
+                            <td>@item.LocationName</td>
+                            <td>@item.ShopName</td>
+                            <td>@item.ModuleName</td>
+                            <td>@(item.ProblemName ?? item.ProblemCategoryName)</td>
+                            <td>@item.ReportedByName</td>
+                            <td>@item.AttendedByName</td>
+                            <td><span class="badge" style="@PriorityBadge(item.PriorityColor ?? "#6c757d")">@item.PriorityName</span></td>
+                            <td><span class="badge" style="@PriorityBadge(item.StatusColor ?? "#6c757d")">@item.StatusName</span></td>
+                            <td>
+                                @if (item.IsLineLoss)
+                                {
+                                    <span class="badge text-bg-danger">Yes</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No</span>
+                                }
+                            </td>
+                            <td>@FormatTimeTaken(item.TimeTakenMinutes)</td>
+                            @if (Model.ShowRelationColumn)
+                            {
+                                <td>
+                                    @foreach (var tag in item.RelationTags)
+                                    {
+                                        <span class="badge text-bg-light border me-1">@tag</span>
+                                    }
+                                </td>
+                            }
+                            <td class="text-end">
+                                <a asp-controller="CallLog" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div class="text-muted small">@Model.TotalCount total call(s) &mdash; page @Model.Page of @Math.Max(1, Model.TotalPages)</div>
+            @if (Model.TotalPages > 1)
+            {
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        @for (var p = Math.Max(1, Model.Page - 3); p <= Math.Min(Model.TotalPages, Model.Page + 3); p++)
+                        {
+                            <li class="page-item @(p == Model.Page ? "active" : "")">
+                                <a class="page-link" asp-controller="CallLog" asp-action="Index"
+                                   asp-route-search="@Model.Search" asp-route-status="@Model.StatusShortcut" asp-route-statusId="@Model.StatusId"
+                                   asp-route-priorityId="@Model.PriorityId" asp-route-locationId="@Model.LocationId"
+                                   asp-route-dateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")" asp-route-dateTo="@Model.DateTo?.ToString("yyyy-MM-dd")"
+                                   asp-route-sort="@Model.Sort" asp-route-dir="@Model.Dir" asp-route-page="@p" asp-route-pageSize="@Model.PageSize">@p</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>

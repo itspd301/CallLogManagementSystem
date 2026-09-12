@@ -1,0 +1,315 @@
+@model CallLogManagementSystem.ViewModels.CallLog.CreateCallLogViewModel
+@{
+    ViewData["Title"] = "Create Call";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">Create Call</h4>
+        <div class="text-muted small">Call Management &rsaquo; Create Call</div>
+    </div>
+</div>
+
+@if (TempData["AttachmentWarning"] is string warn)
+{
+    <div class="alert alert-warning py-2 px-3 small">@warn</div>
+}
+
+<form asp-controller="CallLog" asp-action="Create" method="post" enctype="multipart/form-data" id="createCallForm" novalidate>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 px-3 small mb-3" role="alert"></div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Basic Information</div>
+        <div class="card-body row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Call Number</label>
+                <input type="text" class="form-control" value="Auto-generated on save" disabled />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="LocationId" class="form-label"></label>
+                <select asp-for="LocationId" asp-items="Model.LocationOptions" class="form-select" id="locationSelect">
+                    <option value="">-- Select Location --</option>
+                </select>
+                <span asp-validation-for="LocationId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ShopId" class="form-label"></label>
+                <select asp-for="ShopId" class="form-select" id="shopSelect">
+                    <option value="">-- Select Location First --</option>
+                </select>
+                <span asp-validation-for="ShopId" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="CallType" class="form-label"></label>
+                <select asp-for="CallType" class="form-select">
+                    <option value="UserSupport">User Support</option>
+                    <option value="ShopfloorConcern">Shopfloor Concern</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ReportedDateTime" class="form-label"></label>
+                @if (Model.CanOverrideReportedDateTime)
+                {
+                    <input asp-for="ReportedDateTime" type="datetime-local" class="form-control" />
+                }
+                else
+                {
+                    <input asp-for="ReportedDateTime" type="datetime-local" class="form-control" disabled />
+                    <input type="hidden" asp-for="ReportedDateTime" asp-format="{0:yyyy-MM-ddTHH:mm:ss}" />
+                    <div class="form-text">Set to now. Only Admin/Support Manager can backdate.</div>
+                }
+                <span asp-validation-for="ReportedDateTime" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Problem Information</div>
+        <div class="card-body row g-3">
+            <div class="col-md-4">
+                <label asp-for="ModuleId" class="form-label"></label>
+                <select asp-for="ModuleId" asp-items="Model.ModuleOptions" class="form-select" id="moduleSelect">
+                    <option value="">-- Select Module --</option>
+                </select>
+                <span asp-validation-for="ModuleId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ApplicationTypeId" class="form-label"></label>
+                <select asp-for="ApplicationTypeId" asp-items="Model.ApplicationTypeOptions" class="form-select">
+                    <option value="">-- (optional) --</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ProblemCategoryId" class="form-label"></label>
+                <select asp-for="ProblemCategoryId" asp-items="Model.ProblemCategoryOptions" class="form-select" id="problemCategorySelect">
+                    <option value="">-- Select Problem Category --</option>
+                </select>
+                <span asp-validation-for="ProblemCategoryId" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="ProblemId" class="form-label"></label>
+                <select asp-for="ProblemId" class="form-select" id="problemSelect">
+                    <option value="">-- (optional) --</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="ReportedById" class="form-label"></label>
+                <select asp-for="ReportedById" asp-items="Model.ReportedByOptions" class="form-select">
+                    <option value="">-- Select Employee --</option>
+                </select>
+                <span asp-validation-for="ReportedById" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Describe the problem and its cause..."></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="CallCategoryId" class="form-label"></label>
+                <select asp-for="CallCategoryId" asp-items="Model.CallCategoryOptions" class="form-select">
+                    <option value="">-- Select --</option>
+                </select>
+                <span asp-validation-for="CallCategoryId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="PriorityId" class="form-label"></label>
+                <select asp-for="PriorityId" asp-items="Model.PriorityOptions" class="form-select">
+                    <option value="">-- Select Priority --</option>
+                </select>
+                <span asp-validation-for="PriorityId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <input type="text" class="form-control" value="Open" disabled />
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Support Information</div>
+        <div class="card-body row g-3">
+            <div class="col-md-6">
+                <label asp-for="AttendedById" class="form-label"></label>
+                @if (Model.CanChangeAttendedBy)
+                {
+                    <select asp-for="AttendedById" asp-items="Model.EngineerOptions" class="form-select">
+                        <option value="">-- Select Engineer --</option>
+                    </select>
+                }
+                else
+                {
+                    <input type="text" class="form-control" value="@Model.CurrentUserDisplayName (You)" disabled />
+                    <input type="hidden" asp-for="AttendedById" />
+                }
+                <span asp-validation-for="AttendedById" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="HandedOverToId" class="form-label"></label>
+                <select asp-for="HandedOverToId" asp-items="Model.EngineerOptions" class="form-select">
+                    <option value="">-- (optional) --</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="ICAPCA" class="form-label"></label>
+                <textarea asp-for="ICAPCA" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Line Loss / Downtime</div>
+        <div class="card-body row g-3">
+            <div class="col-12">
+                <label class="form-label d-block">@Html.DisplayNameFor(m => m.IsLineLoss)</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="IsLineLoss" id="lineLossYes" value="true" @(Model.IsLineLoss ? "checked" : "") />
+                    <label class="form-check-label" for="lineLossYes">Yes</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="IsLineLoss" id="lineLossNo" value="false" @(!Model.IsLineLoss ? "checked" : "") />
+                    <label class="form-check-label" for="lineLossNo">No</label>
+                </div>
+            </div>
+
+            <div id="lineLossFields" class="col-12 row g-3" style="display:none;">
+                <div class="col-md-4">
+                    <label asp-for="LineLossArea" class="form-label"></label>
+                    <input asp-for="LineLossArea" class="form-control" />
+                    <span asp-validation-for="LineLossArea" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="LineLossStartDateTime" class="form-label"></label>
+                    <input asp-for="LineLossStartDateTime" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="LineLossStartDateTime" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="LineLossEndDateTime" class="form-label"></label>
+                    <input asp-for="LineLossEndDateTime" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="LineLossEndDateTime" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="LineLossAffectedVehicles" class="form-label"></label>
+                    <input asp-for="LineLossAffectedVehicles" type="number" min="1" class="form-control" />
+                    <span asp-validation-for="LineLossAffectedVehicles" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Attachments &amp; Remarks</div>
+        <div class="card-body row g-3">
+            <div class="col-12">
+                <label class="form-label">Attachments</label>
+                <input type="file" name="Attachments" class="form-control" multiple accept=".png,.jpg,.jpeg,.pdf,.xlsx,.txt,.log" />
+                <div class="form-text">Allowed: PNG, JPG, JPEG, PDF, XLSX, TXT, LOG — max 10 MB each.</div>
+            </div>
+            <div class="col-12">
+                <label asp-for="Remarks" class="form-label"></label>
+                <textarea asp-for="Remarks" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mb-4">
+        <button type="submit" class="btn btn-primary" id="btnSave" onclick="document.getElementById('submitActionField').value='save'">
+            <span class="spinner-border spinner-border-sm d-none" id="saveSpinner"></span> Save Call
+        </button>
+        <button type="submit" class="btn btn-outline-primary" id="btnSaveContinue" onclick="document.getElementById('submitActionField').value='saveAndContinue'">
+            Save &amp; Continue
+        </button>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        <input type="hidden" name="submitAction" id="submitActionField" value="save" />
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var locationSelect = document.getElementById('locationSelect');
+            var shopSelect = document.getElementById('shopSelect');
+            var moduleSelect = document.getElementById('moduleSelect');
+            var categorySelect = document.getElementById('problemCategorySelect');
+            var problemSelect = document.getElementById('problemSelect');
+
+            function loadShops(locationId, selectedShopId) {
+                shopSelect.innerHTML = '<option value="">Loading...</option>';
+                if (!locationId) {
+                    shopSelect.innerHTML = '<option value="">-- Select Location First --</option>';
+                    return;
+                }
+                fetch('@Url.Action("GetShopsByLocation", "CallLog")?locationId=' + locationId)
+                    .then(function (r) { return r.json(); })
+                    .then(function (shops) {
+                        shopSelect.innerHTML = '<option value="">-- Select Shop --</option>';
+                        shops.forEach(function (s) {
+                            var opt = document.createElement('option');
+                            opt.value = s.id;
+                            opt.text = s.name;
+                            if (selectedShopId && String(s.id) === String(selectedShopId)) {
+                                opt.selected = true;
+                            }
+                            shopSelect.appendChild(opt);
+                        });
+                    });
+            }
+
+            function loadProblems(selectedProblemId) {
+                var categoryId = categorySelect.value;
+                var moduleId = moduleSelect.value;
+                var url = '@Url.Action("GetProblems", "CallLog")?';
+                if (categoryId) url += 'problemCategoryId=' + categoryId + '&';
+                if (moduleId) url += 'moduleId=' + moduleId;
+                fetch(url)
+                    .then(function (r) { return r.json(); })
+                    .then(function (problems) {
+                        problemSelect.innerHTML = '<option value="">-- (optional) --</option>';
+                        problems.forEach(function (p) {
+                            var opt = document.createElement('option');
+                            opt.value = p.id;
+                            opt.text = p.name;
+                            if (selectedProblemId && String(p.id) === String(selectedProblemId)) {
+                                opt.selected = true;
+                            }
+                            problemSelect.appendChild(opt);
+                        });
+                    });
+            }
+
+            locationSelect.addEventListener('change', function () { loadShops(this.value, null); });
+            moduleSelect.addEventListener('change', function () { loadProblems(null); });
+            categorySelect.addEventListener('change', function () { loadProblems(null); });
+
+            if (locationSelect.value) {
+                loadShops(locationSelect.value, '@Model.ShopId');
+            }
+            if (categorySelect.value || moduleSelect.value) {
+                loadProblems('@Model.ProblemId');
+            }
+
+            // Line Loss toggle
+            var lineLossFields = document.getElementById('lineLossFields');
+            function updateLineLossVisibility() {
+                var yes = document.getElementById('lineLossYes').checked;
+                lineLossFields.style.display = yes ? 'flex' : 'none';
+            }
+            document.getElementById('lineLossYes').addEventListener('change', updateLineLossVisibility);
+            document.getElementById('lineLossNo').addEventListener('change', updateLineLossVisibility);
+            updateLineLossVisibility();
+
+            // Submit spinner (only for Save, guarded by jQuery Validate)
+            $('#createCallForm').on('submit', function () {
+                if ($(this).valid()) {
+                    $('#saveSpinner').removeClass('d-none');
+                    $('#btnSave, #btnSaveContinue').prop('disabled', true);
+                }
+            });
+        })();
+    </script>
+}

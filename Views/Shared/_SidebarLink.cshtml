@@ -1,0 +1,13 @@
+@model CallLogManagementSystem.ViewModels.Shared.SidebarLinkViewModel
+@using CallLogManagementSystem.Helpers
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var isActive = string.Equals(currentController, Model.Controller, StringComparison.OrdinalIgnoreCase);
+}
+<li>
+    <a class="nav-link @(isActive ? "active" : "")"
+       asp-controller="@Model.Controller" asp-action="@Model.Action" asp-all-route-data="@Model.RouteValues">
+        @IconHelper.Get(Model.Icon)
+        <span class="sidebar-nav-label">@Model.Label</span>
+    </a>
+</li>

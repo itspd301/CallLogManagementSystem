@@ -1,0 +1,47 @@
+@model CallLogManagementSystem.ViewModels.Masters.EngineerFormViewModel
+@{
+    ViewData["Title"] = "Edit Engineer";
+}
+
+<h4 class="mb-3">Edit Engineer</h4>
+
+<div class="card" style="max-width: 520px;">
+    <div class="card-body">
+        <form asp-controller="Engineer" asp-action="Edit" asp-route-id="@Model.Id" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 px-3 small mb-3" role="alert"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label asp-for="ApplicationUserId" class="form-label"></label>
+                <select asp-for="ApplicationUserId" asp-items="Model.UserOptions" class="form-select">
+                    <option value="">-- Select User --</option>
+                </select>
+                <span asp-validation-for="ApplicationUserId" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Specialization" class="form-label"></label>
+                <input asp-for="Specialization" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="LocationId" class="form-label"></label>
+                <select asp-for="LocationId" asp-items="Model.LocationOptions" class="form-select">
+                    <option value="">-- (optional) --</option>
+                </select>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-controller="Engineer" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

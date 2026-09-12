@@ -1,0 +1,46 @@
+@model CallLogManagementSystem.ViewModels.Masters.SimpleMasterFormViewModel
+@{
+    ViewData["Title"] = (Model.IsEdit ? "Edit " : "Add ") + Model.EntityDisplayName;
+}
+
+<h4 class="mb-3">@(Model.IsEdit ? "Edit" : "Add") @Model.EntityDisplayName</h4>
+
+<div class="card" style="max-width: 520px;">
+    <div class="card-body">
+        <form asp-controller="@Model.ControllerName" asp-action="@(Model.IsEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 px-3 small mb-3" role="alert"></div>
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="HasCode" />
+            <input type="hidden" asp-for="EntityDisplayName" />
+            <input type="hidden" asp-for="ControllerName" />
+            <input type="hidden" asp-for="IsEdit" />
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" autofocus />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            @if (Model.HasCode)
+            {
+                <div class="mb-3">
+                    <label asp-for="Code" class="form-label"></label>
+                    <input asp-for="Code" class="form-control text-uppercase" maxlength="20" />
+                    <span asp-validation-for="Code" class="text-danger small"></span>
+                </div>
+            }
+
+            <div class="mb-3 form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-controller="@Model.ControllerName" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

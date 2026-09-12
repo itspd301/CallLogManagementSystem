@@ -1,0 +1,51 @@
+@model CallLogManagementSystem.ViewModels.Masters.PriorityFormViewModel
+@{
+    ViewData["Title"] = "Edit Priority";
+}
+
+<h4 class="mb-3">Edit Priority</h4>
+
+<div class="card" style="max-width: 520px;">
+    <div class="card-body">
+        <form asp-controller="Priority" asp-action="Edit" asp-route-id="@Model.Id" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 px-3 small mb-3" role="alert"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" autofocus />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Code" class="form-label"></label>
+                <input asp-for="Code" class="form-control text-uppercase" />
+                <span asp-validation-for="Code" class="text-danger small"></span>
+                <div class="form-text text-warning">Changing this may affect SLA lookups.</div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Level" class="form-label"></label>
+                <input asp-for="Level" type="number" class="form-control" style="max-width: 120px;" />
+                <span asp-validation-for="Level" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ColorCode" class="form-label"></label>
+                <input asp-for="ColorCode" type="color" class="form-control form-control-color" />
+            </div>
+
+            <div class="mb-3 form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-controller="Priority" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

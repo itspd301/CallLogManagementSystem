@@ -1,0 +1,64 @@
+@model List<CallLogManagementSystem.ViewModels.Notifications.NotificationRowVm>
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">Notifications</h4>
+        <div class="text-muted small">Calls assigned to you, handed over to you, or reopened</div>
+    </div>
+    @if (Model.Any(n => !n.IsRead))
+    {
+        <form asp-controller="Notification" asp-action="MarkAllRead" method="post">
+            <button type="submit" class="btn btn-outline-secondary btn-sm">Mark all as read</button>
+        </form>
+    }
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Message</th>
+                        <th>Call Number</th>
+                        <th>When</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-4">No notifications yet.</td></tr>
+                    }
+                    @foreach (var n in Model)
+                    {
+                        <tr class="@(n.IsRead ? "" : "fw-semibold")">
+                            <td>@n.Message</td>
+                            <td>@n.CallNumber</td>
+                            <td>@n.CreatedDate.ToString("dd-MMM-yyyy hh:mm tt")</td>
+                            <td>
+                                @if (n.IsRead)
+                                {
+                                    <span class="badge text-bg-secondary">Read</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-primary">New</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <form asp-controller="Notification" asp-action="MarkRead" asp-route-id="@n.Id" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">View Call</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

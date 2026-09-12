@@ -1,0 +1,43 @@
+@model CallLogManagementSystem.ViewModels.Account.ProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">My Profile</h4>
+</div>
+
+<div class="card" style="max-width: 560px;">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-4 text-muted">Employee ID</dt>
+            <dd class="col-sm-8">@Model.EmployeeId</dd>
+
+            <dt class="col-sm-4 text-muted">Full Name</dt>
+            <dd class="col-sm-8">@Model.FullName</dd>
+
+            <dt class="col-sm-4 text-muted">Designation</dt>
+            <dd class="col-sm-8">@(Model.Designation ?? "-")</dd>
+
+            <dt class="col-sm-4 text-muted">Location</dt>
+            <dd class="col-sm-8">@(Model.LocationName ?? "-")</dd>
+
+            <dt class="col-sm-4 text-muted">Role(s)</dt>
+            <dd class="col-sm-8">
+                @foreach (var role in Model.Roles)
+                {
+                    <span class="badge text-bg-secondary me-1">@role</span>
+                }
+            </dd>
+
+            <dt class="col-sm-4 text-muted">Account Created</dt>
+            <dd class="col-sm-8">@Model.CreatedDate.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt")</dd>
+
+            <dt class="col-sm-4 text-muted">Last Login</dt>
+            <dd class="col-sm-8">@(Model.LastLoginDate.HasValue ? Model.LastLoginDate.Value.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt") : "-")</dd>
+        </dl>
+    </div>
+    <div class="card-footer bg-white">
+        <a asp-controller="Account" asp-action="ChangePassword" class="btn btn-outline-secondary btn-sm">Change Password</a>
+    </div>
+</div>

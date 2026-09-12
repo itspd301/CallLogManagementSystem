@@ -1,0 +1,120 @@
+@model CallLogManagementSystem.ViewModels.Audit.AuditLogListViewModel
+@using CallLogManagementSystem.Models.Enums
+@{
+    ViewData["Title"] = "Audit Logs";
+
+    string ActionBadgeClass(AuditAction a) => a switch
+    {
+        AuditAction.LoginFailed => "text-bg-danger",
+        AuditAction.Login => "text-bg-success",
+        AuditAction.Logout => "text-bg-secondary",
+        AuditAction.CallClosed => "text-bg-dark",
+        AuditAction.CallReopened => "text-bg-warning",
+        AuditAction.MasterChanged => "text-bg-info",
+        AuditAction.UserChanged => "text-bg-info",
+        _ => "text-bg-primary"
+    };
+
+    string ActionLabel(AuditAction a) => System.Text.RegularExpressions.Regex.Replace(a.ToString(), "(?<=[a-z])(?=[A-Z])", " ");
+}
+
+<div class="mb-3">
+    <h4 class="mb-0">Audit Logs</h4>
+    <div class="text-muted small">Administration &rsaquo; Audit Logs &mdash; system-wide security and change trail (Admin only)</div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-controller="Audit" asp-action="Index" class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="search" value="@Model.Search" class="form-control form-control-sm" placeholder="Search user, entity ID, old/new value..." />
+            </div>
+            <div class="col-md-2">
+                <select name="auditAction" class="form-select form-select-sm">
+                    <option value="">All Actions</option>
+                    @foreach (var a in Enum.GetValues<AuditAction>())
+                    {
+                        <option value="@a" selected="@(Model.Action == a)">@ActionLabel(a)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="entityName" class="form-select form-select-sm">
+                    <option value="">All Entities</option>
+                    @foreach (var opt in Model.EntityNameOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.EntityName == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="dateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" title="From" />
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="dateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" title="To" />
+            </div>
+            <div class="col-md-1 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
+                <a asp-controller="Audit" asp-action="Index" class="btn btn-sm btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Entity</th>
+                        <th>Old Value</th>
+                        <th>New Value</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">No audit entries found.</td></tr>
+                    }
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="text-nowrap">@item.Timestamp.ToLocalTime().ToString("dd-MMM-yyyy hh:mm:ss tt")</td>
+                            <td>@(item.UserName != null ? $"{item.UserName} ({item.EmployeeId})" : "-")</td>
+                            <td><span class="badge @ActionBadgeClass(item.Action)">@ActionLabel(item.Action)</span></td>
+                            <td>@item.EntityName @(item.EntityId != null ? $"#{item.EntityId}" : "")</td>
+                            <td class="small" style="max-width:220px; overflow-wrap:anywhere;">@(item.OldValue ?? "-")</td>
+                            <td class="small" style="max-width:220px; overflow-wrap:anywhere;">@(item.NewValue ?? "-")</td>
+                            <td class="small">@(item.IPAddress ?? "-")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div class="text-muted small">@Model.TotalCount total entr(ies) &mdash; page @Model.Page of @Math.Max(1, Model.TotalPages)</div>
+            @if (Model.TotalPages > 1)
+            {
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        @for (var p = Math.Max(1, Model.Page - 3); p <= Math.Min(Model.TotalPages, Model.Page + 3); p++)
+                        {
+                            <li class="page-item @(p == Model.Page ? "active" : "")">
+                                <a class="page-link" asp-controller="Audit" asp-action="Index"
+                                   asp-route-search="@Model.Search" asp-route-auditAction="@Model.Action" asp-route-entityName="@Model.EntityName"
+                                   asp-route-dateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")" asp-route-dateTo="@Model.DateTo?.ToString("yyyy-MM-dd")"
+                                   asp-route-page="@p" asp-route-pageSize="@Model.PageSize">@p</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,193 @@
+@model CallLogManagementSystem.ViewModels.CallLog.EditPreviousSearchViewModel
+@{
+    ViewData["Title"] = "Edit Previous Entry";
+
+    string FormatTimeTaken(int? minutes)
+    {
+        if (!minutes.HasValue) return "-";
+        var ts = TimeSpan.FromMinutes(minutes.Value);
+        return $"{(int)ts.TotalDays}d {ts.Hours}h {ts.Minutes}m";
+    }
+}
+
+<div class="mb-3">
+    <h4 class="mb-0">Edit Previous Entry</h4>
+    <div class="text-muted small">Call Management &rsaquo; Edit Previous Entry &mdash; search for a call, then open it to edit</div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-controller="CallLog" asp-action="EditPrevious">
+            <input type="hidden" name="search" value="true" />
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Call Number</label>
+                    <input type="text" name="callNumber" value="@Model.CallNumber" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Date From</label>
+                    <input type="date" name="dateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Date To</label>
+                    <input type="date" name="dateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Location</label>
+                    <select name="locationId" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        @foreach (var opt in Model.LocationOptions)
+                        {
+                            <option value="@opt.Value" selected="@(Model.LocationId?.ToString() == opt.Value)">@opt.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Module</label>
+                    <select name="moduleId" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        @foreach (var opt in Model.ModuleOptions)
+                        {
+                            <option value="@opt.Value" selected="@(Model.ModuleId?.ToString() == opt.Value)">@opt.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Problem Category</label>
+                    <select name="problemCategoryId" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        @foreach (var opt in Model.ProblemCategoryOptions)
+                        {
+                            <option value="@opt.Value" selected="@(Model.ProblemCategoryId?.ToString() == opt.Value)">@opt.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Call Category</label>
+                    <select name="callCategoryId" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        @foreach (var opt in Model.CallCategoryOptions)
+                        {
+                            <option value="@opt.Value" selected="@(Model.CallCategoryId?.ToString() == opt.Value)">@opt.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Status</label>
+                    <select name="statusId" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        @foreach (var opt in Model.StatusOptions)
+                        {
+                            <option value="@opt.Value" selected="@(Model.StatusId?.ToString() == opt.Value)">@opt.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Priority</label>
+                    <select name="priorityId" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        @foreach (var opt in Model.PriorityOptions)
+                        {
+                            <option value="@opt.Value" selected="@(Model.PriorityId?.ToString() == opt.Value)">@opt.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Attended By</label>
+                    <select name="attendedById" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        @foreach (var opt in Model.EngineerOptions)
+                        {
+                            <option value="@opt.Value" selected="@(Model.AttendedById?.ToString() == opt.Value)">@opt.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Is Line Loss</label>
+                    <select name="isLineLoss" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        <option value="true" selected="@(Model.IsLineLoss == true)">Yes</option>
+                        <option value="false" selected="@(Model.IsLineLoss == false)">No</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end gap-1">
+                    <button type="submit" class="btn btn-sm btn-primary">Search</button>
+                    <a asp-controller="CallLog" asp-action="EditPrevious" class="btn btn-sm btn-outline-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (!Model.HasSearched)
+{
+    <div class="alert alert-info small">Use the filters above and click <strong>Search</strong> to find a call to edit.</div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Call Number</th>
+                            <th>Reported</th>
+                            <th>Location</th>
+                            <th>Shop</th>
+                            <th>Module</th>
+                            <th>Attended By</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Time Taken</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Items.Any())
+                        {
+                            <tr><td colspan="10" class="text-center text-muted py-4">No calls matched your search.</td></tr>
+                        }
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.CallNumber</td>
+                                <td>@item.ReportedDateTime.ToString("dd-MMM-yyyy hh:mm tt")</td>
+                                <td>@item.LocationName</td>
+                                <td>@item.ShopName</td>
+                                <td>@item.ModuleName</td>
+                                <td>@item.AttendedByName</td>
+                                <td><span class="badge" style="background-color:@(item.PriorityColor ?? "#6c757d");color:#fff;">@item.PriorityName</span></td>
+                                <td><span class="badge" style="background-color:@(item.StatusColor ?? "#6c757d");color:#fff;">@item.StatusName</span></td>
+                                <td>@FormatTimeTaken(item.TimeTakenMinutes)</td>
+                                <td class="text-end">
+                                    <a asp-controller="CallLog" asp-action="EditPreviousEntry" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <div class="text-muted small">@Model.TotalCount total result(s) &mdash; page @Model.Page of @Math.Max(1, Model.TotalPages)</div>
+                @if (Model.TotalPages > 1)
+                {
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            @for (var p = Math.Max(1, Model.Page - 3); p <= Math.Min(Model.TotalPages, Model.Page + 3); p++)
+                            {
+                                <li class="page-item @(p == Model.Page ? "active" : "")">
+                                    <a class="page-link" asp-controller="CallLog" asp-action="EditPrevious"
+                                       asp-route-search="true" asp-route-callNumber="@Model.CallNumber"
+                                       asp-route-statusId="@Model.StatusId" asp-route-priorityId="@Model.PriorityId"
+                                       asp-route-page="@p" asp-route-pageSize="@Model.PageSize">@p</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </div>
+    </div>
+}

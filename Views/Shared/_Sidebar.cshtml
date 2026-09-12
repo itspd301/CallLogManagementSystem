@@ -1,0 +1,91 @@
+@using CallLogManagementSystem.ViewModels.Shared
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@{
+    async Task<bool> Can(string policy) => (await AuthorizationService.AuthorizeAsync(User, policy)).Succeeded;
+
+    var canViewAllCalls = await Can(PolicyNames.ViewAllCalls);
+    var canCreateCall = await Can(PolicyNames.CreateCall);
+    var canEditCall = await Can(PolicyNames.EditCall);
+    var canAccessMasters = await Can(PolicyNames.AccessMasterConfiguration);
+    var canViewReports = await Can(PolicyNames.ViewReports);
+    var canManageUsers = await Can(PolicyNames.ManageUsers);
+    var canManageRoles = await Can(PolicyNames.ManageRoles);
+    var canViewAudit = await Can(PolicyNames.ViewAuditLogs);
+}
+
+<aside class="app-sidebar" id="appSidebar">
+    <ul class="sidebar-nav">
+        <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Dashboard", Action = "Index", Icon = "dashboard", Label = "Dashboard" })" />
+    </ul>
+
+    <div class="sidebar-section-title">Call Management</div>
+    <ul class="sidebar-nav">
+        @if (canCreateCall)
+        {
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "CallLog", Action = "Create", Icon = "plus-call", Label = "Create Call" })" />
+        }
+        @if (canViewAllCalls)
+        {
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "CallLog", Action = "Index", Icon = "list", Label = "All Calls" })" />
+        }
+        <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "CallLog", Action = "MyCalls", Icon = "user-list", Label = "My Calls" })" />
+        @if (canViewAllCalls)
+        {
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "CallLog", Action = "Index", RouteValues = new() { ["status"] = "open" }, Icon = "folder-open", Label = "Open Calls" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "CallLog", Action = "Index", RouteValues = new() { ["status"] = "closed" }, Icon = "check-circle", Label = "Closed Calls" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "CallLog", Action = "Index", RouteValues = new() { ["status"] = "reopened" }, Icon = "rotate", Label = "Reopened Calls" })" />
+        }
+        <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "CallLog", Action = "EditPrevious", Icon = "edit", Label = "Edit Previous Entry" })" />
+    </ul>
+
+    @if (canViewReports)
+    {
+        <div class="sidebar-section-title">Reports</div>
+        <ul class="sidebar-nav">
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Reports", Action = "CallReport", Icon = "chart", Label = "Call Reports" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Reports", Action = "EngineerPerformance", Icon = "chart", Label = "Engineer Performance" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Reports", Action = "SlaReport", Icon = "chart", Label = "SLA Report" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Reports", Action = "LineLossReport", Icon = "chart", Label = "Line Loss Report" })" />
+        </ul>
+    }
+
+    @if (canAccessMasters)
+    {
+        <div class="sidebar-section-title">Master Configuration</div>
+        <ul class="sidebar-nav">
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Location", Action = "Index", Icon = "gear", Label = "Locations" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Shop", Action = "Index", Icon = "gear", Label = "Shops" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Module", Action = "Index", Icon = "gear", Label = "Modules" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "ApplicationType", Action = "Index", Icon = "gear", Label = "Application Types" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "CallCategory", Action = "Index", Icon = "gear", Label = "Call Categories" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "ProblemCategory", Action = "Index", Icon = "gear", Label = "Problem Categories" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Problem", Action = "Index", Icon = "gear", Label = "Problems" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Engineer", Action = "Index", Icon = "gear", Label = "Engineers" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Employee", Action = "Index", Icon = "gear", Label = "Employees" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Status", Action = "Index", Icon = "gear", Label = "Statuses" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Priority", Action = "Index", Icon = "gear", Label = "Priorities" })" />
+            <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "SLAConfiguration", Action = "Index", Icon = "gear", Label = "SLA Configuration" })" />
+        </ul>
+    }
+
+    @if (canManageUsers || canManageRoles || canViewAudit)
+    {
+        <div class="sidebar-section-title">Administration</div>
+        <ul class="sidebar-nav">
+            @if (canManageUsers)
+            {
+                <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "User", Action = "Index", Icon = "user-list", Label = "Users" })" />
+            }
+            @if (canManageRoles)
+            {
+                <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Role", Action = "Index", Icon = "shield-users", Label = "Roles" })" />
+            }
+            @if (canViewAudit)
+            {
+                <partial name="_SidebarLink" model="@(new SidebarLinkViewModel { Controller = "Audit", Action = "Index", Icon = "file-text", Label = "Audit Logs" })" />
+            }
+        </ul>
+    }
+</aside>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>

@@ -1,0 +1,286 @@
+@model CallLogManagementSystem.ViewModels.CallLog.EditCallLogViewModel
+@{
+    ViewData["Title"] = "Edit " + Model.CallNumber;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">
+            @Model.CallNumber
+            <span class="badge ms-2" style="background-color:@Model.StatusColor;color:#fff;">@Model.StatusName</span>
+        </h4>
+        <div class="text-muted small">Call Management &rsaquo; Edit Previous Entry &rsaquo; @Model.CallNumber</div>
+    </div>
+    <a asp-controller="CallLog" asp-action="EditPrevious" class="btn btn-outline-secondary btn-sm">&larr; Back to Search</a>
+</div>
+
+@if (TempData["StatusMessage"] is string status)
+{
+    <div class="alert alert-success py-2 px-3 small">@status</div>
+}
+
+@if (Model.RecentChanges.Any())
+{
+    <div class="alert alert-info py-2 px-3 small">
+        <strong>Changes recorded:</strong>
+        <ul class="mb-0 mt-1">
+            @foreach (var change in Model.RecentChanges)
+            {
+                <li>@change</li>
+            }
+        </ul>
+    </div>
+}
+
+@if (Model.IsClosed)
+{
+    <div class="alert alert-warning py-2 px-3 small">This call is <strong>Closed</strong>. Only Admin / Support Manager can edit it further.</div>
+}
+
+@if (!Model.CanEditSpecialFields)
+{
+    <div class="alert alert-secondary py-2 px-3 small">
+        You can update the problem details below. Location, Shop, Module, Reported By/Date, Attended By and Line Loss require Admin or Support Manager permission.
+    </div>
+}
+
+<div class="card mb-3">
+    <div class="card-body row g-3">
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Created By</label>
+            <div>@Model.CreatedByName</div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Created Date</label>
+            <div>@Model.CreatedDate.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt")</div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Time Taken</label>
+            <div>@Model.TimeTakenDisplay</div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Call Number</label>
+            <div>@Model.CallNumber</div>
+        </div>
+    </div>
+</div>
+
+<form asp-controller="CallLog" asp-action="EditPreviousEntry" asp-route-id="@Model.Id" method="post" id="editCallForm" novalidate>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 px-3 small mb-3" role="alert"></div>
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="CanEditSpecialFields" />
+    <input type="hidden" asp-for="CanEditNormalFields" />
+    <input type="hidden" asp-for="IsClosed" />
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">
+            Location / Module / Assignment
+            @if (!Model.CanEditSpecialFields)
+            {
+                <span class="badge text-bg-secondary float-end">Admin / Support Manager only</span>
+            }
+        </div>
+        <div class="card-body row g-3">
+            <div class="col-md-4">
+                <label asp-for="LocationId" class="form-label"></label>
+                <select asp-for="LocationId" asp-items="Model.LocationOptions" class="form-select" id="locationSelect" disabled="@(!Model.CanEditSpecialFields)"></select>
+                <span asp-validation-for="LocationId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ShopId" class="form-label"></label>
+                <select asp-for="ShopId" asp-items="Model.ShopOptions" class="form-select" id="shopSelect" disabled="@(!Model.CanEditSpecialFields)"></select>
+                <span asp-validation-for="ShopId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ModuleId" class="form-label"></label>
+                <select asp-for="ModuleId" asp-items="Model.ModuleOptions" class="form-select" disabled="@(!Model.CanEditSpecialFields)"></select>
+                <span asp-validation-for="ModuleId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ApplicationTypeId" class="form-label"></label>
+                <select asp-for="ApplicationTypeId" asp-items="Model.ApplicationTypeOptions" class="form-select" disabled="@(!Model.CanEditSpecialFields)">
+                    <option value="">-- (optional) --</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ReportedById" class="form-label"></label>
+                <select asp-for="ReportedById" asp-items="Model.ReportedByOptions" class="form-select" disabled="@(!Model.CanEditSpecialFields)"></select>
+                <span asp-validation-for="ReportedById" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ReportedDateTime" class="form-label"></label>
+                <input asp-for="ReportedDateTime" type="datetime-local" class="form-control" disabled="@(!Model.CanEditSpecialFields)" />
+                <span asp-validation-for="ReportedDateTime" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="AttendedById" class="form-label"></label>
+                <select asp-for="AttendedById" asp-items="Model.EngineerOptions" class="form-select" disabled="@(!Model.CanEditSpecialFields)"></select>
+                <span asp-validation-for="AttendedById" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">
+            Line Loss / Downtime
+            @if (!Model.CanEditSpecialFields)
+            {
+                <span class="badge text-bg-secondary float-end">Admin / Support Manager only</span>
+            }
+        </div>
+        <div class="card-body row g-3">
+            <div class="col-12">
+                <label class="form-label d-block">@Html.DisplayNameFor(m => m.IsLineLoss)</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="IsLineLoss" id="lineLossYes" value="true" disabled="@(!Model.CanEditSpecialFields)" @(Model.IsLineLoss ? "checked" : "") />
+                    <label class="form-check-label" for="lineLossYes">Yes</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="IsLineLoss" id="lineLossNo" value="false" disabled="@(!Model.CanEditSpecialFields)" @(!Model.IsLineLoss ? "checked" : "") />
+                    <label class="form-check-label" for="lineLossNo">No</label>
+                </div>
+                @if (!Model.CanEditSpecialFields)
+                {
+                    <input type="hidden" name="IsLineLoss" value="@Model.IsLineLoss.ToString().ToLower()" />
+                }
+            </div>
+            <div id="lineLossFields" class="col-12 row g-3" style="display:@(Model.IsLineLoss ? "flex" : "none");">
+                <div class="col-md-4">
+                    <label asp-for="LineLossArea" class="form-label"></label>
+                    <input asp-for="LineLossArea" class="form-control" disabled="@(!Model.CanEditSpecialFields)" />
+                    <span asp-validation-for="LineLossArea" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="LineLossStartDateTime" class="form-label"></label>
+                    <input asp-for="LineLossStartDateTime" type="datetime-local" class="form-control" disabled="@(!Model.CanEditSpecialFields)" />
+                    <span asp-validation-for="LineLossStartDateTime" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="LineLossEndDateTime" class="form-label"></label>
+                    <input asp-for="LineLossEndDateTime" type="datetime-local" class="form-control" disabled="@(!Model.CanEditSpecialFields)" />
+                    <span asp-validation-for="LineLossEndDateTime" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="LineLossAffectedVehicles" class="form-label"></label>
+                    <input asp-for="LineLossAffectedVehicles" type="number" min="1" class="form-control" disabled="@(!Model.CanEditSpecialFields)" />
+                    <span asp-validation-for="LineLossAffectedVehicles" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold">Problem Details</div>
+        <div class="card-body row g-3">
+            <div class="col-md-6">
+                <label asp-for="ProblemCategoryId" class="form-label"></label>
+                <select asp-for="ProblemCategoryId" asp-items="Model.ProblemCategoryOptions" class="form-select" id="problemCategorySelect"></select>
+                <span asp-validation-for="ProblemCategoryId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="ProblemId" class="form-label"></label>
+                <select asp-for="ProblemId" asp-items="Model.ProblemOptions" class="form-select" id="problemSelect">
+                    <option value="">-- (optional) --</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="CallCategoryId" class="form-label"></label>
+                <select asp-for="CallCategoryId" asp-items="Model.CallCategoryOptions" class="form-select"></select>
+                <span asp-validation-for="CallCategoryId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="PriorityId" class="form-label"></label>
+                <select asp-for="PriorityId" asp-items="Model.PriorityOptions" class="form-select"></select>
+                <span asp-validation-for="PriorityId" class="text-danger small"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="ICAPCA" class="form-label"></label>
+                <textarea asp-for="ICAPCA" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="col-12">
+                <label asp-for="Remarks" class="form-label"></label>
+                <textarea asp-for="Remarks" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mb-4">
+        <button type="submit" class="btn btn-primary" id="btnSave">
+            <span class="spinner-border spinner-border-sm d-none" id="saveSpinner"></span> Save Changes
+        </button>
+        <a asp-controller="CallLog" asp-action="EditPrevious" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var canEditSpecial = @Model.CanEditSpecialFields.ToString().ToLower();
+            var locationSelect = document.getElementById('locationSelect');
+            var shopSelect = document.getElementById('shopSelect');
+            var categorySelect = document.getElementById('problemCategorySelect');
+            var problemSelect = document.getElementById('problemSelect');
+
+            function loadShops(locationId, selectedShopId) {
+                if (!canEditSpecial || !locationId) return;
+                fetch('@Url.Action("GetShopsByLocation", "CallLog")?locationId=' + locationId)
+                    .then(function (r) { return r.json(); })
+                    .then(function (shops) {
+                        shopSelect.innerHTML = '';
+                        shops.forEach(function (s) {
+                            var opt = document.createElement('option');
+                            opt.value = s.id;
+                            opt.text = s.name;
+                            if (String(s.id) === String(selectedShopId)) opt.selected = true;
+                            shopSelect.appendChild(opt);
+                        });
+                    });
+            }
+
+            function loadProblems(selectedProblemId) {
+                var categoryId = categorySelect.value;
+                fetch('@Url.Action("GetProblems", "CallLog")?problemCategoryId=' + categoryId)
+                    .then(function (r) { return r.json(); })
+                    .then(function (problems) {
+                        problemSelect.innerHTML = '<option value="">-- (optional) --</option>';
+                        problems.forEach(function (p) {
+                            var opt = document.createElement('option');
+                            opt.value = p.id;
+                            opt.text = p.name;
+                            if (selectedProblemId && String(p.id) === String(selectedProblemId)) opt.selected = true;
+                            problemSelect.appendChild(opt);
+                        });
+                    });
+            }
+
+            if (canEditSpecial) {
+                locationSelect.addEventListener('change', function () { loadShops(this.value, null); });
+            }
+            categorySelect.addEventListener('change', function () { loadProblems(null); });
+
+            var lineLossFields = document.getElementById('lineLossFields');
+            var yesRadio = document.getElementById('lineLossYes');
+            var noRadio = document.getElementById('lineLossNo');
+            function updateLineLossVisibility() {
+                lineLossFields.style.display = yesRadio.checked ? 'flex' : 'none';
+            }
+            if (canEditSpecial) {
+                yesRadio.addEventListener('change', updateLineLossVisibility);
+                noRadio.addEventListener('change', updateLineLossVisibility);
+            }
+
+            $('#editCallForm').on('submit', function () {
+                if ($(this).valid()) {
+                    $('#saveSpinner').removeClass('d-none');
+                    $('#btnSave').prop('disabled', true);
+                }
+            });
+        })();
+    </script>
+}

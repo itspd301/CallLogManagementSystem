@@ -1,0 +1,542 @@
+@model CallLogManagementSystem.ViewModels.CallLog.CallLogDetailsViewModel
+@using CallLogManagementSystem.Models.Enums
+@{
+    ViewData["Title"] = Model.CallNumber;
+
+    string FormatTimeTaken(int? minutes)
+    {
+        if (!minutes.HasValue) return "-";
+        var ts = TimeSpan.FromMinutes(minutes.Value);
+        return $"{(int)ts.TotalDays}d {ts.Hours}h {ts.Minutes}m";
+    }
+
+    string FormatBytes(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:0.#} KB";
+        return $"{bytes / 1024.0 / 1024.0:0.#} MB";
+    }
+
+    var breadcrumb = string.Join(" &rsaquo; ", new[] { Model.ModuleName, Model.ShopName, Model.ProblemName ?? Model.ProblemCategoryName }.Where(s => !string.IsNullOrEmpty(s)));
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-1">
+            @Model.CallNumber
+            <span class="badge ms-2" style="background-color:@(Model.PriorityColor ?? "#6c757d");color:#fff;">@Model.PriorityName.ToUpper()</span>
+            <span class="badge ms-1" style="background-color:@(Model.StatusColor ?? "#6c757d");color:#fff;">@Model.StatusName.ToUpper()</span>
+        </h4>
+        <div class="text-muted small">@Html.Raw(breadcrumb)</div>
+    </div>
+    <div class="d-flex gap-2">
+        @if (Model.CanEdit)
+        {
+            <a asp-controller="CallLog" asp-action="EditPreviousEntry" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">Edit</a>
+        }
+        @if (Model.CanAssign)
+        {
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignModal">Assign</button>
+        }
+        @if (Model.CanHandover)
+        {
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#handoverModal">Handover</button>
+        }
+        @if (Model.CanStartProgress)
+        {
+            <form asp-controller="CallLog" asp-action="StartProgress" asp-route-id="@Model.Id" method="post" class="d-inline">
+                <button type="submit" class="btn btn-outline-primary btn-sm">Start Progress</button>
+            </form>
+        }
+        @if (Model.CanResolve)
+        {
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#resolveModal">Resolve</button>
+        }
+        @if (Model.CanResolveAndClose)
+        {
+            <button type="button" class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#resolveCloseModal">Resolve &amp; Close</button>
+        }
+        @if (Model.CanClose)
+        {
+            <form asp-controller="CallLog" asp-action="Close" asp-route-id="@Model.Id" method="post" class="d-inline"
+                  onsubmit="return confirm('Close @Model.CallNumber? This will record the closing time and cannot be undone from here.');">
+                <button type="submit" class="btn btn-dark btn-sm">Close</button>
+            </form>
+        }
+        @if (Model.CanReopen)
+        {
+            <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#reopenModal">Reopen</button>
+        }
+        <a asp-controller="CallLog" asp-action="MyCalls" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+    </div>
+</div>
+
+@if (TempData["StatusMessage"] is string status)
+{
+    <div class="alert alert-success py-2 px-3 small">@status</div>
+}
+@if (TempData["AttachmentWarning"] is string warn)
+{
+    <div class="alert alert-warning py-2 px-3 small">@warn</div>
+}
+@if (TempData["AssignError"] is string assignError)
+{
+    <div class="alert alert-danger py-2 px-3 small">@assignError</div>
+}
+@if (TempData["HandoverError"] is string handoverError)
+{
+    <div class="alert alert-danger py-2 px-3 small">@handoverError</div>
+}
+@if (TempData["LifecycleError"] is string lifecycleError)
+{
+    <div class="alert alert-danger py-2 px-3 small">@lifecycleError</div>
+}
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Basic Information</div>
+            <div class="card-body row g-2">
+                <div class="col-md-4"><div class="text-muted small">Location</div><div>@Model.LocationName</div></div>
+                <div class="col-md-4"><div class="text-muted small">Shop</div><div>@Model.ShopName</div></div>
+                <div class="col-md-4"><div class="text-muted small">Call Type</div><div>@(Model.CallType == CallType.UserSupport ? "User Support" : "Shopfloor Concern")</div></div>
+                <div class="col-md-4"><div class="text-muted small">Module</div><div>@Model.ModuleName</div></div>
+                <div class="col-md-4"><div class="text-muted small">Application Type</div><div>@(Model.ApplicationTypeName ?? "-")</div></div>
+                <div class="col-md-4"><div class="text-muted small">Reported Date &amp; Time</div><div>@Model.ReportedDateTime.ToString("dd-MMM-yyyy hh:mm tt")</div></div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Problem Information</div>
+            <div class="card-body row g-2">
+                <div class="col-md-6"><div class="text-muted small">Problem Category</div><div>@Model.ProblemCategoryName</div></div>
+                <div class="col-md-6"><div class="text-muted small">Problem</div><div>@(Model.ProblemName ?? "-")</div></div>
+                <div class="col-md-6"><div class="text-muted small">Call Category</div><div>@Model.CallCategoryName</div></div>
+                <div class="col-md-6"><div class="text-muted small">Priority</div><div>@Model.PriorityName</div></div>
+                <div class="col-12">
+                    <div class="text-muted small">Description &amp; Cause of Problem</div>
+                    <div style="white-space:pre-wrap;">@Model.Description</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Support Information</div>
+            <div class="card-body row g-2">
+                <div class="col-md-4"><div class="text-muted small">Reported By</div><div>@Model.ReportedByName</div></div>
+                <div class="col-md-4"><div class="text-muted small">Attended By</div><div>@Model.AttendedByName</div></div>
+                <div class="col-md-4"><div class="text-muted small">Handed Over To</div><div>@(Model.HandedOverToName ?? "-")</div></div>
+
+                @if (Model.AssignmentHistory.Any())
+                {
+                    <div class="col-12 mt-2">
+                        <div class="text-muted small mb-1">Assignment History</div>
+                        <ul class="list-unstyled mb-0 small">
+                            @foreach (var a in Model.AssignmentHistory)
+                            {
+                                <li class="mb-1">
+                                    Assigned to <strong>@a.EngineerName</strong> by @a.AssignedByName on @a.AssignedDateTime.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt")
+                                    @if (!string.IsNullOrEmpty(a.Remarks))
+                                    {
+                                        <span class="text-muted"> &mdash; @a.Remarks</span>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                @if (Model.HandoverHistory.Any())
+                {
+                    <div class="col-12 mt-2">
+                        <div class="text-muted small mb-1">Handover History</div>
+                        <ul class="list-unstyled mb-0 small">
+                            @foreach (var h in Model.HandoverHistory)
+                            {
+                                <li class="mb-1">
+                                    <strong>@h.FromEngineerName</strong> &rarr; <strong>@h.ToEngineerName</strong>
+                                    on @h.HandoverDateTime.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt")
+                                    <div class="text-muted">Reason: @h.Reason@(!string.IsNullOrEmpty(h.Remarks) ? $" — {h.Remarks}" : "")</div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Resolution / ICA-PCA</div>
+            <div class="card-body row g-2">
+                <div class="col-12">
+                    <div class="text-muted small">ICA / PCA</div>
+                    <div style="white-space:pre-wrap;">@(Model.ICAPCA ?? "-")</div>
+                </div>
+                <div class="col-12">
+                    <div class="text-muted small">Remarks</div>
+                    <div style="white-space:pre-wrap;">@(Model.Remarks ?? "-")</div>
+                </div>
+                <div class="col-md-4"><div class="text-muted small">Closing Date &amp; Time</div><div>@(Model.ClosingDateTime?.ToString("dd-MMM-yyyy hh:mm tt") ?? "-")</div></div>
+                <div class="col-md-4"><div class="text-muted small">Time Taken</div><div>@FormatTimeTaken(Model.TimeTakenMinutes)</div></div>
+            </div>
+        </div>
+
+        @if (Model.IsLineLoss)
+        {
+            <div class="card mb-3 border-danger">
+                <div class="card-header fw-semibold text-danger">Line Loss / Downtime</div>
+                <div class="card-body row g-2">
+                    <div class="col-md-3"><div class="text-muted small">Line / Area</div><div>@(Model.LineLossArea ?? "-")</div></div>
+                    <div class="col-md-3"><div class="text-muted small">Downtime Start</div><div>@(Model.LineLossStartDateTime?.ToString("dd-MMM-yyyy hh:mm tt") ?? "-")</div></div>
+                    <div class="col-md-3"><div class="text-muted small">Downtime End</div><div>@(Model.LineLossEndDateTime?.ToString("dd-MMM-yyyy hh:mm tt") ?? "-")</div></div>
+                    <div class="col-md-3"><div class="text-muted small">Duration</div><div>@FormatTimeTaken(Model.LineLossDurationMinutes)</div></div>
+                    <div class="col-md-3"><div class="text-muted small">Affected Vehicles</div><div>@(Model.LineLossAffectedVehicles?.ToString() ?? "-")</div></div>
+                </div>
+            </div>
+        }
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Attachments</div>
+            <div class="card-body">
+                @if (!Model.Attachments.Any())
+                {
+                    <div class="text-muted small">No attachments.</div>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-3">
+                        @foreach (var a in Model.Attachments)
+                        {
+                            <li class="mb-1 d-flex align-items-center justify-content-between">
+                                <div>
+                                    <a href="@a.FilePath" target="_blank" rel="noopener">@a.FileName</a>
+                                    <span class="text-muted small"> &mdash; @FormatBytes(a.FileSize) &middot; @a.UploadedByName, @a.UploadedDate.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt")</span>
+                                </div>
+                                @if (a.CanDelete)
+                                {
+                                    <form asp-controller="CallLog" asp-action="DeleteAttachment" asp-route-id="@Model.Id" method="post"
+                                          onsubmit="return confirm('Remove \'@a.FileName\'? This cannot be undone.');" class="ms-2">
+                                        <input type="hidden" name="attachmentId" value="@a.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">&times;</button>
+                                    </form>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+                @if (Model.CanAddCommentOrAttachment)
+                {
+                    <form asp-controller="CallLog" asp-action="AddAttachment" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="d-flex gap-2">
+                        <input type="file" name="files" class="form-control form-control-sm" multiple accept=".png,.jpg,.jpeg,.pdf,.xlsx,.txt,.log" />
+                        <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">Add</button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Comments</div>
+            <div class="card-body">
+                <div id="commentsList">
+                    <div id="noCommentsMsg" class="text-muted small" style="@(Model.Comments.Any() ? "display:none;" : "")">No comments yet.</div>
+                    @foreach (var c in Model.Comments)
+                    {
+                        <div class="mb-2 comment-item">
+                            <span class="fw-semibold">@c.CreatedByName</span>
+                            <span class="text-muted small"> &mdash; @c.CreatedDate.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt")</span>
+                            <div style="white-space:pre-wrap;">@c.Comment</div>
+                        </div>
+                    }
+                </div>
+
+                @if (Model.CanAddCommentOrAttachment)
+                {
+                    <form id="addCommentForm" asp-controller="CallLog" asp-action="AddComment" asp-route-id="@Model.Id" method="post" class="mt-3">
+                        <div asp-validation-summary="None" class="text-danger small mb-1" id="commentError"></div>
+                        <textarea name="comment" id="commentText" class="form-control form-control-sm" rows="2" placeholder="Add a comment..." required></textarea>
+                        <button type="submit" class="btn btn-sm btn-primary mt-2">
+                            <span class="spinner-border spinner-border-sm d-none" id="commentSpinner"></span> Post Comment
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Activity Timeline</div>
+            <div class="card-body">
+                @if (!Model.Activities.Any())
+                {
+                    <div class="text-muted small">No activity recorded.</div>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0" style="border-left: 2px solid #e3e7ed; padding-left: 1rem;">
+                        @foreach (var act in Model.Activities)
+                        {
+                            <li class="mb-3 position-relative">
+                                <span style="position:absolute; left:-1.4rem; top:0.2rem; width:8px; height:8px; border-radius:50%; background:#2c7be5; display:inline-block;"></span>
+                                <div class="small text-muted">@act.PerformedDateTime.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt")</div>
+                                <div class="fw-semibold small">@act.Description</div>
+                                @if (act.OldValue != null || act.NewValue != null)
+                                {
+                                    <div class="small text-muted">@(act.OldValue ?? "-") &rarr; @(act.NewValue ?? "-")</div>
+                                }
+                                <div class="small text-muted">by @act.PerformedByName</div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Audit Information</div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <div class="text-muted small">Created By</div>
+                    <div>@Model.CreatedByName &middot; @Model.CreatedDate.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt")</div>
+                </div>
+                <div>
+                    <div class="text-muted small">Last Modified</div>
+                    <div>@(Model.ModifiedByName != null ? $"{Model.ModifiedByName} · {Model.ModifiedDate!.Value.ToLocalTime():dd-MMM-yyyy hh:mm tt}" : "-")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.CanAssign)
+{
+    <div class="modal fade" id="assignModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-controller="CallLog" asp-action="Assign" asp-route-id="@Model.Id" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Assign Engineer &mdash; @Model.CallNumber</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Currently Attended By</label>
+                            <div>@Model.AssignForm.CurrentAttendedByName</div>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="AssignForm.EngineerId" class="form-label"></label>
+                            <select asp-for="AssignForm.EngineerId" asp-items="Model.AssignForm.EngineerOptions" class="form-select">
+                                <option value="">-- Select Engineer --</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="AssignForm.Remarks" class="form-label"></label>
+                            <textarea asp-for="AssignForm.Remarks" class="form-control" rows="2" placeholder="Optional note, e.g. reason for assignment"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Assign</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.CanHandover)
+{
+    <div class="modal fade" id="handoverModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-controller="CallLog" asp-action="Handover" asp-route-id="@Model.Id" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Handover &mdash; @Model.CallNumber</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">From</label>
+                            <div>@Model.HandoverForm.FromEngineerName</div>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="HandoverForm.ToEngineerId" class="form-label"></label>
+                            <select asp-for="HandoverForm.ToEngineerId" asp-items="Model.HandoverForm.EngineerOptions" class="form-select">
+                                <option value="">-- Select Engineer --</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="HandoverForm.Reason" class="form-label"></label>
+                            <textarea asp-for="HandoverForm.Reason" class="form-control" rows="2" placeholder="e.g. MES configuration knowledge required" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="HandoverForm.Remarks" class="form-label"></label>
+                            <textarea asp-for="HandoverForm.Remarks" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Hand Over</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.CanResolve)
+{
+    <div class="modal fade" id="resolveModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-controller="CallLog" asp-action="Resolve" asp-route-id="@Model.Id" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Resolve &mdash; @Model.CallNumber</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label asp-for="ResolveForm.ICAPCA" class="form-label">ICA / PCA (required)</label>
+                            <textarea asp-for="ResolveForm.ICAPCA" class="form-control" rows="3" placeholder="Root cause and corrective action taken" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="ResolveForm.Remarks" class="form-label"></label>
+                            <textarea asp-for="ResolveForm.Remarks" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Resolve</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.CanResolveAndClose)
+{
+    <div class="modal fade" id="resolveCloseModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-controller="CallLog" asp-action="ResolveAndClose" asp-route-id="@Model.Id" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Resolve &amp; Close &mdash; @Model.CallNumber</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-secondary small py-2 px-3">For calls fixed on the spot &mdash; this assigns (if needed), resolves, and closes the call in one step.</div>
+                        <div class="mb-3">
+                            <label asp-for="ResolveAndCloseForm.ICAPCA" class="form-label">ICA / PCA (required)</label>
+                            <textarea asp-for="ResolveAndCloseForm.ICAPCA" class="form-control" rows="3" placeholder="Root cause and corrective action taken" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="ResolveAndCloseForm.Remarks" class="form-label"></label>
+                            <textarea asp-for="ResolveAndCloseForm.Remarks" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-dark">Resolve &amp; Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.CanReopen)
+{
+    <div class="modal fade" id="reopenModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-controller="CallLog" asp-action="Reopen" asp-route-id="@Model.Id" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Reopen &mdash; @Model.CallNumber</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="reopenReason" class="form-label">Reason (required)</label>
+                            <textarea name="reason" id="reopenReason" class="form-control" rows="3" placeholder="Why is this call being reopened?" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Reopen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            var form = document.getElementById('addCommentForm');
+            if (!form) return;
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                var textArea = document.getElementById('commentText');
+                var errorBox = document.getElementById('commentError');
+                var spinner = document.getElementById('commentSpinner');
+                var submitBtn = form.querySelector('button[type="submit"]');
+
+                errorBox.textContent = '';
+
+                if (!textArea.value.trim()) {
+                    errorBox.textContent = 'Comment cannot be empty.';
+                    return;
+                }
+
+                spinner.classList.remove('d-none');
+                submitBtn.disabled = true;
+
+                fetch(form.action, { method: 'POST', body: new FormData(form) })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (!data.success) {
+                            errorBox.textContent = data.error || 'Failed to add comment.';
+                            return;
+                        }
+
+                        var noCommentsMsg = document.getElementById('noCommentsMsg');
+                        if (noCommentsMsg) noCommentsMsg.style.display = 'none';
+
+                        // Built via DOM APIs (textContent), not innerHTML — the comment body is
+                        // user-supplied text and must never be interpreted as HTML.
+                        var item = document.createElement('div');
+                        item.className = 'mb-2 comment-item';
+
+                        var header = document.createElement('span');
+                        header.className = 'fw-semibold';
+                        header.textContent = data.createdByName;
+                        item.appendChild(header);
+
+                        var meta = document.createElement('span');
+                        meta.className = 'text-muted small';
+                        meta.textContent = ' — ' + data.createdDateDisplay;
+                        item.appendChild(meta);
+
+                        var body = document.createElement('div');
+                        body.style.whiteSpace = 'pre-wrap';
+                        body.textContent = data.comment;
+                        item.appendChild(body);
+
+                        document.getElementById('commentsList').appendChild(item);
+                        form.reset();
+                    })
+                    .catch(function () {
+                        errorBox.textContent = 'Failed to add comment. Please try again.';
+                    })
+                    .finally(function () {
+                        spinner.classList.add('d-none');
+                        submitBtn.disabled = false;
+                    });
+            });
+        })();
+    </script>
+}

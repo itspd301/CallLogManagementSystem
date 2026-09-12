@@ -1,0 +1,139 @@
+@model CallLogManagementSystem.ViewModels.Reports.CallReportViewModel
+@using CallLogManagementSystem.ViewModels.Reports
+@{
+    ViewData["Title"] = "Call Reports";
+
+    string FormatMinutes(double? minutes)
+    {
+        if (!minutes.HasValue) return "-";
+        var ts = TimeSpan.FromMinutes(minutes.Value);
+        return ts.TotalDays >= 1 ? $"{(int)ts.TotalDays}d {ts.Hours}h" : $"{ts.Hours}h {ts.Minutes}m";
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">Call Reports</h4>
+        <div class="text-muted small">Reports &rsaquo; Call Reports &mdash; @Model.DateFrom?.ToString("dd-MMM-yyyy") to @Model.DateTo?.ToString("dd-MMM-yyyy")</div>
+    </div>
+    <div class="no-print d-flex gap-2">
+        <a class="btn btn-outline-success btn-sm" asp-controller="Reports" asp-action="CallReportExportExcel"
+           asp-route-dateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")" asp-route-dateTo="@Model.DateTo?.ToString("yyyy-MM-dd")"
+           asp-route-locationId="@Model.LocationId" asp-route-shopId="@Model.ShopId" asp-route-moduleId="@Model.ModuleId"
+           asp-route-statusId="@Model.StatusId" asp-route-priorityId="@Model.PriorityId" asp-route-groupBy="@Model.GroupBy">Export to Excel</a>
+        <a class="btn btn-outline-danger btn-sm" asp-controller="Reports" asp-action="CallReportExportPdf"
+           asp-route-dateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")" asp-route-dateTo="@Model.DateTo?.ToString("yyyy-MM-dd")"
+           asp-route-locationId="@Model.LocationId" asp-route-shopId="@Model.ShopId" asp-route-moduleId="@Model.ModuleId"
+           asp-route-statusId="@Model.StatusId" asp-route-priorityId="@Model.PriorityId" asp-route-groupBy="@Model.GroupBy">Export to PDF</a>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">Print</button>
+    </div>
+</div>
+
+<div class="card mb-3 no-print">
+    <div class="card-body">
+        <form method="get" asp-controller="Reports" asp-action="CallReport" class="row g-2">
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Date From</label>
+                <input type="date" name="dateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Date To</label>
+                <input type="date" name="dateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Location</label>
+                <select name="locationId" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var opt in Model.LocationOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.LocationId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Status</label>
+                <select name="statusId" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var opt in Model.StatusOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.StatusId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Priority</label>
+                <select name="priorityId" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var opt in Model.PriorityOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.PriorityId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Group By</label>
+                <select name="groupBy" class="form-select form-select-sm">
+                    @foreach (var g in Enum.GetValues<ReportGroupBy>())
+                    {
+                        <option value="@g" selected="@(Model.GroupBy == g)">@g</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                <a asp-controller="Reports" asp-action="CallReport" class="btn btn-sm btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card"><div class="card-body py-2 px-3"><div class="small text-muted">Total</div><div class="fs-4 fw-bold text-primary">@Model.GrandTotal</div></div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card"><div class="card-body py-2 px-3"><div class="small text-muted">Open (active)</div><div class="fs-4 fw-bold text-info">@Model.GrandOpen</div></div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card"><div class="card-body py-2 px-3"><div class="small text-muted">Closed</div><div class="fs-4 fw-bold text-success">@Model.GrandClosed</div></div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card"><div class="card-body py-2 px-3"><div class="small text-muted">Line Loss</div><div class="fs-4 fw-bold text-danger">@Model.GrandLineLoss</div></div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>@Model.GroupBy</th>
+                        <th>Total</th>
+                        <th>Open</th>
+                        <th>Closed</th>
+                        <th>Line Loss</th>
+                        <th>Avg Resolution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-4">No data for the selected filters.</td></tr>
+                    }
+                    @foreach (var row in Model.Rows)
+                    {
+                        <tr>
+                            <td>@row.GroupLabel</td>
+                            <td>@row.Total</td>
+                            <td>@row.OpenCount</td>
+                            <td>@row.ClosedCount</td>
+                            <td>@row.LineLossCount</td>
+                            <td>@FormatMinutes(row.AverageResolutionMinutes)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

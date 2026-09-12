@@ -1,0 +1,122 @@
+@model CallLogManagementSystem.ViewModels.Masters.SimpleMasterListViewModel
+@{
+    ViewData["Title"] = Model.EntityDisplayName + "s";
+
+    string SortUrl(string column) => Url.Action("Index", Model.ControllerName, new
+    {
+        search = Model.Search,
+        sort = column,
+        dir = Model.Sort == column && Model.Dir == "asc" ? "desc" : "asc",
+        page = 1,
+        pageSize = Model.PageSize
+    })!;
+
+    string SortIndicator(string column) => Model.Sort == column ? (Model.Dir == "asc" ? " ▲" : " ▼") : "";
+
+    // Precomputed into plain variables rather than called inline as @Method("literal") inside
+    // an HTML attribute — Razor's attribute-value parser can misread the quotes inside the
+    // string argument as the attribute's own closing quote, corrupting everything after it
+    // (this was rendering as literal "@SortIndicator(...)" text in the page).
+    var nameSortUrl = SortUrl("Name");
+    var nameSortIndicator = SortIndicator("Name");
+    var statusSortUrl = SortUrl("IsActive");
+    var statusSortIndicator = SortIndicator("IsActive");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">@Model.EntityDisplayName Master</h4>
+        <div class="text-muted small">Master Configuration &rsaquo; @Model.EntityDisplayName</div>
+    </div>
+    <a asp-controller="@Model.ControllerName" asp-action="Create" class="btn btn-primary btn-sm">+ Add @Model.EntityDisplayName</a>
+</div>
+
+@if (TempData["StatusMessage"] is string status)
+{
+    <div class="alert alert-success py-2 px-3 small">@status</div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" asp-controller="@Model.ControllerName" asp-action="Index" class="row g-2 mb-3">
+            <input type="hidden" name="sort" value="@Model.Sort" />
+            <input type="hidden" name="dir" value="@Model.Dir" />
+            <div class="col-auto">
+                <input type="text" name="search" value="@Model.Search" class="form-control form-control-sm" placeholder="Search by name@(Model.HasCode ? " or code" : "")..." style="width: 260px;" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Search</button>
+                <a asp-controller="@Model.ControllerName" asp-action="Index" class="btn btn-sm btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th><a class="text-decoration-none text-dark" href="@nameSortUrl">Name@(nameSortIndicator)</a></th>
+                        @if (Model.HasCode)
+                        {
+                            <th>Code</th>
+                        }
+                        <th><a class="text-decoration-none text-dark" href="@statusSortUrl">Status@(statusSortIndicator)</a></th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">No @Model.EntityDisplayName.ToLower()s found.</td>
+                        </tr>
+                    }
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.Name</td>
+                            @if (Model.HasCode)
+                            {
+                                <td><span class="badge text-bg-light border">@item.Code</span></td>
+                            }
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge text-bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-controller="@Model.ControllerName" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                <form asp-controller="@Model.ControllerName" asp-action="ToggleActive" asp-route-id="@item.Id" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm @(item.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                                        @(item.IsActive ? "Deactivate" : "Activate")
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    @for (var p = 1; p <= Model.TotalPages; p++)
+                    {
+                        <li class="page-item @(p == Model.Page ? "active" : "")">
+                            <a class="page-link" asp-controller="@Model.ControllerName" asp-action="Index"
+                               asp-route-search="@Model.Search" asp-route-sort="@Model.Sort" asp-route-dir="@Model.Dir"
+                               asp-route-page="@p" asp-route-pageSize="@Model.PageSize">@p</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+        <div class="text-muted small mt-2">@Model.TotalCount total record(s)</div>
+    </div>
+</div>

@@ -1,0 +1,82 @@
+@model CallLogManagementSystem.ViewModels.Administration.RoleListViewModel
+@{
+    ViewData["Title"] = "Roles";
+}
+
+<div class="mb-3">
+    <h4 class="mb-0">Roles</h4>
+    <div class="text-muted small">Administration &rsaquo; Roles</div>
+</div>
+
+<div class="alert alert-info small">
+    The five application roles are fixed by design &mdash; every permission check throughout the system is defined against these exact roles.
+    New roles can't be created here (a new role would start with zero permissions), and none of the five can be deleted while users hold them.
+    To change what a user can do, assign them a different role from <a asp-controller="User" asp-action="Index">User Management</a>.
+</div>
+
+<div class="card mb-3">
+    <div class="card-header fw-semibold">Roles &amp; User Counts</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead class="table-light"><tr><th>Role</th><th>Users</th><th class="text-end">Actions</th></tr></thead>
+                <tbody>
+                    @foreach (var role in Model.Roles)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@role.Name</td>
+                            <td>@role.UserCount</td>
+                            <td class="text-end">
+                                <a asp-controller="User" asp-action="Index" asp-route-role="@role.Name" class="btn btn-sm btn-outline-secondary">View Users</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-semibold">Permission Matrix (Reference)</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead class="table-light">
+                    <tr><th>Capability</th><th>Admin</th><th>Support Manager</th><th>Support Engineer</th><th>Supervisor</th><th>Viewer</th></tr>
+                </thead>
+                <tbody>
+                    @{
+                        var matrix = new (string Capability, bool Admin, bool Manager, bool Engineer, bool Supervisor, bool Viewer)[]
+                        {
+                            ("Manage Users / Roles", true, false, false, false, false),
+                            ("View Audit Logs", true, false, false, false, false),
+                            ("Master Configuration", true, true, false, false, false),
+                            ("View All Calls", true, true, false, true, true),
+                            ("Create Call", true, true, true, false, false),
+                            ("Edit Call (any)", true, true, false, false, false),
+                            ("Edit Own Assigned Call", true, true, true, false, false),
+                            ("Assign Engineer", true, true, false, false, false),
+                            ("Handover (own call)", true, true, true, false, false),
+                            ("Start Progress / Resolve (own call)", true, true, true, false, false),
+                            ("Close / Reopen Call", true, true, false, true, false),
+                            ("Add Comment / Attachment", true, true, true, true, false),
+                            ("View Reports / Dashboard", true, true, true, true, true)
+                        };
+                    }
+                    @foreach (var row in matrix)
+                    {
+                        <tr>
+                            <td>@row.Capability</td>
+                            <td>@(row.Admin ? "✓" : "")</td>
+                            <td>@(row.Manager ? "✓" : "")</td>
+                            <td>@(row.Engineer ? "✓" : "")</td>
+                            <td>@(row.Supervisor ? "✓" : "")</td>
+                            <td>@(row.Viewer ? "✓" : "")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

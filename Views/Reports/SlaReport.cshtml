@@ -1,0 +1,140 @@
+@model CallLogManagementSystem.ViewModels.Reports.SlaReportViewModel
+@{
+    ViewData["Title"] = "SLA Report";
+
+    string FormatMinutes(int minutes)
+    {
+        var ts = TimeSpan.FromMinutes(minutes);
+        return ts.TotalDays >= 1 ? $"{(int)ts.TotalDays}d {ts.Hours}h" : $"{ts.Hours}h {ts.Minutes}m";
+    }
+
+    string StatusBadge(string status) => status switch
+    {
+        "Met" => "text-bg-success",
+        "Breached" => "text-bg-danger",
+        "Pending" => "text-bg-warning",
+        _ => "text-bg-secondary"
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">SLA Report</h4>
+        <div class="text-muted small">Reports &rsaquo; SLA Report &mdash; @Model.DateFrom?.ToString("dd-MMM-yyyy") to @Model.DateTo?.ToString("dd-MMM-yyyy")</div>
+    </div>
+    <button type="button" class="btn btn-outline-secondary btn-sm no-print" onclick="window.print()">Print</button>
+</div>
+
+<div class="card mb-3 no-print">
+    <div class="card-body">
+        <form method="get" asp-controller="Reports" asp-action="SlaReport" class="row g-2">
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Date From</label>
+                <input type="date" name="dateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Date To</label>
+                <input type="date" name="dateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Priority</label>
+                <select name="priorityId" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var opt in Model.PriorityOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.PriorityId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Location</label>
+                <select name="locationId" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var opt in Model.LocationOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.LocationId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input type="checkbox" name="breachedOnly" value="true" class="form-check-input" id="breachedOnly" checked="@Model.BreachedOnly" />
+                    <label class="form-check-label small" for="breachedOnly">Breached only</label>
+                </div>
+            </div>
+            <div class="col-md-2 d-flex align-items-end gap-1">
+                <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                <a asp-controller="Reports" asp-action="SlaReport" class="btn btn-sm btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header fw-semibold">Summary by Priority</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead class="table-light">
+                    <tr><th>Priority</th><th>Total</th><th>Met</th><th>Breached</th><th>Pending</th><th>Breach %</th></tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Summary.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-3">No data for the selected filters.</td></tr>
+                    }
+                    @foreach (var s in Model.Summary)
+                    {
+                        <tr>
+                            <td><span class="badge" style="background-color:@(s.PriorityColor ?? "#6c757d");color:#fff;">@s.PriorityName</span></td>
+                            <td>@s.Total</td>
+                            <td class="text-success">@s.Met</td>
+                            <td class="text-danger">@s.Breached</td>
+                            <td class="text-warning">@s.Pending</td>
+                            <td>@s.BreachPercentage%</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-semibold">Call Detail</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Call Number</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Reported</th>
+                        <th>SLA Target</th>
+                        <th>Actual</th>
+                        <th>SLA Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Details.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">No calls matched.</td></tr>
+                    }
+                    @foreach (var d in Model.Details)
+                    {
+                        <tr>
+                            <td><a asp-controller="CallLog" asp-action="Details" asp-route-id="@d.CallLogId">@d.CallNumber</a></td>
+                            <td><span class="badge" style="background-color:@(d.PriorityColor ?? "#6c757d");color:#fff;">@d.PriorityName</span></td>
+                            <td>@d.StatusName</td>
+                            <td>@d.ReportedDateTime.ToString("dd-MMM-yyyy hh:mm tt")</td>
+                            <td>@(d.ResolutionTargetMinutes.HasValue ? FormatMinutes(d.ResolutionTargetMinutes.Value) : "-")</td>
+                            <td>@FormatMinutes(d.ActualMinutes)</td>
+                            <td><span class="badge @StatusBadge(d.SlaStatus)">@d.SlaStatus</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

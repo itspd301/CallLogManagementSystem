@@ -1,0 +1,67 @@
+@model CallLogManagementSystem.ViewModels.Masters.EmployeeFormViewModel
+@{
+    ViewData["Title"] = "Edit Employee";
+}
+
+<h4 class="mb-3">Edit Employee</h4>
+
+<div class="card" style="max-width: 560px;">
+    <div class="card-body">
+        <form asp-controller="Employee" asp-action="Edit" asp-route-id="@Model.Id" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 px-3 small mb-3" role="alert"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="row">
+                <div class="col-sm-5 mb-3">
+                    <label asp-for="EmployeeCode" class="form-label"></label>
+                    <input asp-for="EmployeeCode" class="form-control" autofocus />
+                    <span asp-validation-for="EmployeeCode" class="text-danger small"></span>
+                </div>
+                <div class="col-sm-7 mb-3">
+                    <label asp-for="FullName" class="form-label"></label>
+                    <input asp-for="FullName" class="form-control" />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Designation" class="form-label"></label>
+                <input asp-for="Designation" class="form-control" />
+            </div>
+
+            <div class="row">
+                <div class="col-sm-6 mb-3">
+                    <label asp-for="LocationId" class="form-label"></label>
+                    <select asp-for="LocationId" asp-items="Model.LocationOptions" class="form-select">
+                        <option value="">-- Select Location --</option>
+                    </select>
+                    <span asp-validation-for="LocationId" class="text-danger small"></span>
+                </div>
+                <div class="col-sm-6 mb-3">
+                    <label asp-for="ShopId" class="form-label"></label>
+                    <select asp-for="ShopId" asp-items="Model.ShopOptions" class="form-select">
+                        <option value="">-- (optional) --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ContactNumber" class="form-label"></label>
+                <input asp-for="ContactNumber" class="form-control" />
+                <span asp-validation-for="ContactNumber" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-controller="Employee" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,123 @@
+@model CallLogManagementSystem.ViewModels.Reports.LineLossReportViewModel
+@{
+    ViewData["Title"] = "Line Loss Report";
+
+    string FormatMinutes(int minutes)
+    {
+        var ts = TimeSpan.FromMinutes(minutes);
+        return ts.TotalDays >= 1 ? $"{(int)ts.TotalDays}d {ts.Hours}h" : $"{ts.Hours}h {ts.Minutes}m";
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">Line Loss Report</h4>
+        <div class="text-muted small">Reports &rsaquo; Line Loss Report &mdash; @Model.DateFrom?.ToString("dd-MMM-yyyy") to @Model.DateTo?.ToString("dd-MMM-yyyy")</div>
+    </div>
+    <button type="button" class="btn btn-outline-secondary btn-sm no-print" onclick="window.print()">Print</button>
+</div>
+
+<div class="card mb-3 no-print">
+    <div class="card-body">
+        <form method="get" asp-controller="Reports" asp-action="LineLossReport" class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Date From</label>
+                <input type="date" name="dateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Date To</label>
+                <input type="date" name="dateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Location</label>
+                <select name="locationId" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var opt in Model.LocationOptions)
+                    {
+                        <option value="@opt.Value" selected="@(Model.LocationId?.ToString() == opt.Value)">@opt.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end gap-1">
+                <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                <a asp-controller="Reports" asp-action="LineLossReport" class="btn btn-sm btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card"><div class="card-body py-2 px-3"><div class="small text-muted">Total Incidents</div><div class="fs-4 fw-bold text-danger">@Model.TotalIncidents</div></div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card"><div class="card-body py-2 px-3"><div class="small text-muted">Total Downtime</div><div class="fs-4 fw-bold text-danger">@FormatMinutes(Model.TotalDowntimeMinutes)</div></div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card"><div class="card-body py-2 px-3"><div class="small text-muted">Affected Vehicles</div><div class="fs-4 fw-bold text-danger">@Model.TotalAffectedVehicles</div></div></div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header fw-semibold">Downtime by Shop</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead class="table-light"><tr><th>Shop</th><th>Incidents</th><th>Total Downtime</th><th>Affected Vehicles</th></tr></thead>
+                <tbody>
+                    @if (!Model.ByShop.Any())
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-3">No line loss incidents for the selected filters.</td></tr>
+                    }
+                    @foreach (var s in Model.ByShop)
+                    {
+                        <tr><td>@s.ShopName</td><td>@s.IncidentCount</td><td>@FormatMinutes(s.TotalDowntimeMinutes)</td><td>@s.TotalAffectedVehicles</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-semibold">Incident Detail</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Call Number</th>
+                        <th>Location</th>
+                        <th>Shop</th>
+                        <th>Line/Area</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Duration</th>
+                        <th>Affected Vehicles</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr><td colspan="9" class="text-center text-muted py-4">No line loss incidents for the selected filters.</td></tr>
+                    }
+                    @foreach (var r in Model.Rows)
+                    {
+                        <tr>
+                            <td><a asp-controller="CallLog" asp-action="Details" asp-route-id="@r.CallLogId">@r.CallNumber</a></td>
+                            <td>@r.LocationName</td>
+                            <td>@r.ShopName</td>
+                            <td>@(r.LineLossArea ?? "-")</td>
+                            <td>@(r.Start?.ToString("dd-MMM-yyyy hh:mm tt") ?? "-")</td>
+                            <td>@(r.End?.ToString("dd-MMM-yyyy hh:mm tt") ?? "-")</td>
+                            <td>@(r.DurationMinutes.HasValue ? FormatMinutes(r.DurationMinutes.Value) : "Ongoing")</td>
+                            <td>@(r.AffectedVehicles?.ToString() ?? "-")</td>
+                            <td>@r.StatusName</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,155 @@
+@using CallLogManagementSystem.Helpers
+@using CallLogManagementSystem.Interfaces
+@inject ICurrentUserService CurrentUser
+@{
+    var fullName = CurrentUser.FullName ?? CurrentUser.EmployeeId ?? "User";
+    var initials = string.Concat(
+        fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Take(2)
+            .Select(w => char.ToUpperInvariant(w[0])));
+    if (string.IsNullOrEmpty(initials))
+    {
+        initials = "U";
+    }
+}
+
+<header class="app-topbar">
+    <div class="app-topbar-left">
+        <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" aria-label="Toggle sidebar">
+            @IconHelper.Get("menu")
+        </button>
+        <a asp-controller="Home" asp-action="Index" class="app-brand">
+            <span class="app-brand-badge">@IconHelper.Get("plus-call")</span>
+            <span class="app-brand-text">
+                Call Log &amp; Support MS
+                <small>IT / MES Support Portal</small>
+            </span>
+        </a>
+    </div>
+
+    <div class="app-topbar-right">
+        <div class="dropdown">
+            <button class="topbar-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+                @IconHelper.Get("bell")
+                <span class="notif-badge" id="notifBadge"></span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end p-2" style="min-width: 320px; max-width: 360px;">
+                <div class="d-flex justify-content-between align-items-center px-2 py-1">
+                    <span class="fw-semibold small">Notifications</span>
+                    <a asp-controller="Notification" asp-action="Index" class="small">View all</a>
+                </div>
+                <div id="notifList">
+                    <div class="px-2 py-1 small text-muted">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <form id="notifMarkReadForm" asp-controller="Notification" asp-action="MarkRead" method="post" class="d-none">
+            <input type="hidden" name="id" id="notifMarkReadId" />
+        </form>
+
+        <div class="dropdown">
+            <button class="user-menu-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="user-avatar">@initials</span>
+                <span class="user-menu-info">
+                    <span class="d-block user-name">@fullName</span>
+                    <span class="d-block user-role">@(CurrentUser.PrimaryRole ?? CurrentUser.Designation) &middot; @CurrentUser.EmployeeId</span>
+                </span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <div class="user-dropdown-header">
+                        <div class="user-name">@fullName</div>
+                        <div class="user-meta">@CurrentUser.Designation</div>
+                        <div class="user-meta">Employee ID: @CurrentUser.EmployeeId</div>
+                    </div>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                    <a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Account" asp-action="Profile">
+                        @IconHelper.Get("user") <span>Profile</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Account" asp-action="ChangePassword">
+                        @IconHelper.Get("key") <span>Change Password</span>
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="px-1">
+                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-danger">
+                            @IconHelper.Get("logout") <span>Logout</span>
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>
+
+<script>
+    (function () {
+        var badge = document.getElementById('notifBadge');
+        var list = document.getElementById('notifList');
+        var markReadForm = document.getElementById('notifMarkReadForm');
+        var markReadId = document.getElementById('notifMarkReadId');
+
+        function renderList(items) {
+            list.innerHTML = '';
+
+            if (!items.length) {
+                var empty = document.createElement('div');
+                empty.className = 'px-2 py-1 small text-muted';
+                empty.textContent = 'No new notifications';
+                list.appendChild(empty);
+                return;
+            }
+
+            items.forEach(function (item) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'dropdown-item small py-2 border-bottom' + (item.isRead ? '' : ' fw-semibold');
+
+                var msg = document.createElement('div');
+                msg.textContent = item.message;
+                btn.appendChild(msg);
+
+                var when = document.createElement('div');
+                when.className = 'text-muted';
+                when.style.fontSize = '11px';
+                when.textContent = item.createdDate;
+                btn.appendChild(when);
+
+                btn.addEventListener('click', function () {
+                    markReadId.value = item.id;
+                    markReadForm.action = '@Url.Action("MarkRead", "Notification")';
+                    markReadForm.submit();
+                });
+
+                list.appendChild(btn);
+            });
+        }
+
+        function refresh() {
+            fetch('@Url.Action("Recent", "Notification")')
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (data) {
+                    if (!data) return;
+
+                    if (data.unreadCount > 0) {
+                        badge.textContent = data.unreadCount > 9 ? '9+' : data.unreadCount;
+                        badge.style.display = 'inline-flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+
+                    renderList(data.items);
+                })
+                .catch(function () { /* transient network error — next poll will retry */ });
+        }
+
+        refresh();
+        setInterval(refresh, 30000);
+    })();
+</script>

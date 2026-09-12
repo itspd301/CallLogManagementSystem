@@ -1,0 +1,40 @@
+@model CallLogManagementSystem.ViewModels.Masters.SLAConfigurationFormViewModel
+@{
+    ViewData["Title"] = "Configure SLA";
+}
+
+<h4 class="mb-3">SLA for "@Model.PriorityName"</h4>
+
+<div class="card" style="max-width: 480px;">
+    <div class="card-body">
+        <form asp-controller="SLAConfiguration" asp-action="Edit" asp-route-priorityId="@Model.PriorityId" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 px-3 small mb-3" role="alert"></div>
+            <input type="hidden" asp-for="PriorityId" />
+            <input type="hidden" asp-for="PriorityName" />
+
+            <div class="mb-3">
+                <label asp-for="ResponseMinutes" class="form-label"></label>
+                <input asp-for="ResponseMinutes" type="number" class="form-control" autofocus />
+                <span asp-validation-for="ResponseMinutes" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ResolutionMinutes" class="form-label"></label>
+                <input asp-for="ResolutionMinutes" type="number" class="form-control" />
+                <span asp-validation-for="ResolutionMinutes" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-controller="SLAConfiguration" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

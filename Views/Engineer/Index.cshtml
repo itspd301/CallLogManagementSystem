@@ -1,0 +1,69 @@
+@model List<CallLogManagementSystem.ViewModels.Masters.EngineerRowVm>
+@{
+    ViewData["Title"] = "Engineers";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">Engineer Master</h4>
+        <div class="text-muted small">Master Configuration &rsaquo; Engineers (support staff eligible for Attend/Handover/Assignment)</div>
+    </div>
+    <a asp-controller="Engineer" asp-action="Create" class="btn btn-primary btn-sm">+ Add Engineer</a>
+</div>
+
+@if (TempData["StatusMessage"] is string status)
+{
+    <div class="alert alert-success py-2 px-3 small">@status</div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Specialization</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-4">No engineers found.</td></tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td><span class="badge text-bg-light border">@item.EmployeeId</span></td>
+                            <td>@item.FullName</td>
+                            <td>@(item.Specialization ?? "-")</td>
+                            <td>@(item.LocationName ?? "-")</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge text-bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-controller="Engineer" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                <form asp-controller="Engineer" asp-action="ToggleActive" asp-route-id="@item.Id" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm @(item.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                                        @(item.IsActive ? "Deactivate" : "Activate")
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

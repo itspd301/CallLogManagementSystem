@@ -1,0 +1,63 @@
+@model List<CallLogManagementSystem.ViewModels.Masters.SLAConfigurationRowVm>
+@{
+    ViewData["Title"] = "SLA Configuration";
+}
+
+<div class="mb-3">
+    <h4 class="mb-0">SLA Configuration</h4>
+    <div class="text-muted small">Master Configuration &rsaquo; SLA Configuration &mdash; one configuration per priority</div>
+</div>
+
+@if (TempData["StatusMessage"] is string status)
+{
+    <div class="alert alert-success py-2 px-3 small">@status</div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Priority</th>
+                        <th>Response Time</th>
+                        <th>Resolution Time</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <span class="badge" style="background-color:@item.PriorityColor;">@item.PriorityName</span>
+                            </td>
+                            <td>@(item.HasConfiguration ? $"{item.ResponseMinutes} min" : "Not configured")</td>
+                            <td>@(item.HasConfiguration ? $"{item.ResolutionMinutes} min" : "Not configured")</td>
+                            <td>
+                                @if (!item.HasConfiguration)
+                                {
+                                    <span class="badge text-bg-warning">Missing</span>
+                                }
+                                else if (item.IsActive)
+                                {
+                                    <span class="badge text-bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-controller="SLAConfiguration" asp-action="Edit" asp-route-priorityId="@item.PriorityId" class="btn btn-sm btn-outline-secondary">
+                                    @(item.HasConfiguration ? "Edit" : "Configure")
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
