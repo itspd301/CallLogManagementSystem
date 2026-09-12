@@ -1,0 +1,177 @@
+﻿@{
+    ViewData["Title"] = "KPI Master Create";
+    Layout = "~/Views/Shared/admin/_Layout.cshtml";
+}
+
+
+
+
+
+
+<div class="container mt-4">
+    <div class="bg-white p-4 rounded shadow-sm">
+
+        <h4 class="mb-4">Create KPI</h4>
+         
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Indicator</label>
+                <select id="Indicator_ID" class="form-control"></select>
+                <small class="text-danger" id="errIndicator"></small>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Unit</label>
+                <select id="Unit_ID" class="form-control"></select>
+                <small class="text-danger" id="errUnit"></small>
+            </div>
+        </div>
+         
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Description</label>
+                <input type="text" id="Description" class="form-control" />
+                <small class="text-danger" id="errDescription"></small>
+            </div>
+
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Display Order</label>
+                <input type="number" id="DisplayOrder" class="form-control" />
+                <small class="text-danger" id="errDisplayOrder"></small>
+            </div>
+        </div>
+         
+        <div class="mt-2">
+            <button class="btn btn-success me-2" onclick="saveKPI()">Save</button>
+            <a href="/ProductionMeeting/KPI_Master_Index" class="btn btn-secondary">Cancel</a>
+        </div>
+
+    </div>
+</div>
+
+
+@section Scripts {
+
+    <script>
+        $(document).ready(function () {
+            loadIndicators();
+            loadUnits();
+        });
+                
+        $('input, select').on('change keyup', function () {
+            validateForm();
+        });
+
+        function loadIndicators() {
+            $.get('/ProductionMeeting/GetIndicators', function (data) {
+
+                let options = '<option value="">--Select Indicator--</option>';
+
+                data.forEach(x => {
+                    options += `<option value="${x.Row_ID}">${x.IndicatorName}</option>`;
+                });
+
+                $('#Indicator_ID').html(options);
+            });
+        }
+                
+        function validateForm() {
+
+            let isValid = true;
+
+            // Clear previous errors
+            $(".text-danger").text("");
+
+            let indicator = $('#Indicator_ID').val();
+            let unit = $('#Unit_ID').val();
+            let desc = $('#Description').val().trim();
+            let order = $('#DisplayOrder').val();
+
+            if (!indicator) {
+                $('#errIndicator').text("Please select Indicator");
+                isValid = false;
+            }
+
+            if (!unit) {
+                $('#errUnit').text("Please select Unit");
+                isValid = false;
+            }
+
+            if (!desc) {
+                $('#errDescription').text("Description is required");
+                isValid = false;
+            }
+
+            if (!order) {
+                $('#errDisplayOrder').text("Display Order is required");
+                isValid = false;
+            }
+            else if (parseInt(order) <= 0) {
+                $('#errDisplayOrder').text("Display Order must be greater than 0");
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+                
+        function loadUnits() {
+            $.get('/ProductionMeeting/GetUnits', function (data) {
+
+                let options = '<option value="">--Select Unit--</option>';
+
+                data.forEach(x => {
+                    options += `<option value="${x.UnitID}">${x.UnitName}</option>`;
+                });
+
+                $('#Unit_ID').html(options);
+            });
+        }
+
+                function saveKPI() {
+
+            if (!validateForm()) return;
+
+            var model = {
+                Indicator_ID: $('#Indicator_ID').val(),
+                Unit_ID: $('#Unit_ID').val(),
+                Description: $('#Description').val(),
+                DisplayOrder: $('#DisplayOrder').val()
+            };
+
+            let btn = $(".btn-success");
+            btn.prop("disabled", true);
+
+            toastr.info("Saving data...");
+
+            $.ajax({
+                url: '/ProductionMeeting/CreateKPI',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(model),
+                success: function (res) {
+
+                    btn.prop("disabled", false);
+
+                    if (res.success) {
+                        toastr.success(res.msg || "Saved successfully");
+                         
+                        setTimeout(function () {
+                            window.location.href = '/ProductionMeeting/KPI_Master_Index';
+                        }, 1000);
+                    } else {
+                        toastr.error(res.msg || "Save failed");
+                    }
+                },
+                error: function () {
+
+                    btn.prop("disabled", false);
+
+                    toastr.error("Error saving data");
+                }
+            });
+        }
+
+    </script>
+}

@@ -1,0 +1,79 @@
+﻿@{
+    ViewData["Title"] = "Production Meeting Index";
+    Layout = "~/Views/Shared/admin/_Layout.cshtml";
+}
+
+@section Styles {
+
+    <link href="~/css/ppc/productionmeeting.css" rel="stylesheet" />
+}
+
+
+@section scripts {
+
+    <script src="~/js/ordermanagement/productionmeeting.js"></script>
+
+}
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KPI Dashboard</title>
+
+</head>
+
+<body>
+    <div class="dashboard-header">
+
+        <!-- Left Column: Date Filters -->
+        <div class="header-filters">
+            <label class="filter-label">Select Date:</label>
+            <input type="text"
+                   id="txtMeetingDate"
+                   class="form-control date-input"
+                   autocomplete="off" />
+            <button id="btnShowData"
+                    class="btn btn-primary">
+                Show Data
+            </button>
+        </div>
+
+        <!-- Center Column: Heading -->
+        <h2 id="dashboardTitle" class="header-title">
+            XUV TCF Production Meeting Dashboard | @DateTime.Now.ToString("dd-MMM-yyyy")
+        </h2>
+
+        <!-- Right Column: Empty Spacer to balance the layout -->
+        <div class="header-spacer d-none d-lg-block"></div>
+
+    </div>
+
+
+
+
+
+    <table id="kpiTable">
+        <thead>
+            <tr>
+                <th rowspan="2">Indicators</th>
+                <th rowspan="2">Desc.</th>
+                <th rowspan="2">Units</th>
+                <th rowspan="2">F26</th>
+                <th rowspan="2">F27<br>L4 Targ.</th>
+                <th colspan="3">XUV 300 TCF</th>
+                <th rowspan="2">Remarks</th>
+            </tr>
+            <tr>
+                <th>Week</th>
+                <th>Month Cum.</th>
+                <th>YTD</th>
+            </tr>
+        </thead>
+        <tbody id="kpiBody"></tbody>
+    </table>
+    <div style="margin-top:15px; text-align:right;">
+        <button id="saveBtn" class="btn btn-primary">Save</button>
+    </div>
+</body>
+</html>

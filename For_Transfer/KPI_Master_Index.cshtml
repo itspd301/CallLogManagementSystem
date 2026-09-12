@@ -1,0 +1,209 @@
+﻿@{
+    ViewData["Title"] = "KPI Master Index";
+    Layout = "~/Views/Shared/admin/_Layout.cshtml";
+}
+
+<div class="table-responsive bg-white p-4 rounded shadow-sm mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <div>
+            <a href="/ProductionMeeting/KPI_Master_Create" class="btn btn-secondary d-inline-flex align-items-center">
+                <i class="bi bi-plus-circle me-2"></i> Create New
+            </a>
+        </div>
+        <div id="kpiTable_filter_placeholder"></div>
+    </div>
+
+    <table class="table table-bordered table-hover align-middle" id="kpiTable">
+        <thead class="table-secondary">
+            <tr>
+                <th>KPI ID</th>
+                <th>Indicator ID</th>
+                <th>Indicator Name</th>
+                <th>Unit Name</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- Loader -->
+<div id="loader" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:9999;">
+    <img src="~/content/images/waveloading.gif" style="width:150px;" />
+</div>
+
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Delete KPI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <input type="hidden" id="deleteKpiId" />
+
+                <div class="mb-2">
+                    <label>Indicator</label>
+                    <input type="text" id="delIndicator" class="form-control" readonly />
+                </div>
+
+                <div class="mb-2">
+                    <label>Description</label>
+                    <input type="text" id="delDesc" class="form-control" readonly />
+                </div>
+
+                <div class="mb-2">
+                    <label>Unit</label>
+                    <input type="text" id="delUnit" class="form-control" readonly />
+                </div>
+
+                <p class="text-danger mt-2">Are you sure you want to delete this record?</p>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+
+
+        $(document).ready(function () {
+
+            var table = $('#kpiTable')
+
+                .on('preXhr.dt', function () {
+                    $('#loader').show();
+                })
+                .on('xhr.dt', function () {
+                    $('#loader').hide();
+                })
+                .on('error.dt', function () {
+                    $('#loader').hide();
+                })
+
+                .DataTable({
+                    processing: false,
+                    serverSide: true,
+                    ajax: {
+                        url: '@Url.Action("GetKPIMasterData", "ProductionMeeting")',
+                        type: 'POST',
+                        dataType: 'json',
+                        dataSrc: 'data',
+                        beforeSend: function () { $('#loader').show(); },
+                        complete: function () { $('#loader').hide(); },
+                        error: function () { $('#loader').hide(); }
+                    },
+
+                    order: [[0, 'desc']],
+                    columns: [
+                        { data: 'KPI_ID', visible: false },
+
+                        { data: 'IndicatorID' },
+                        { data: 'IndicatorName' },
+                        { data: 'UnitName' },
+                        { data: 'Description' },
+
+                        {
+                            data: 'KPI_ID',
+                            orderable: false,
+                            render: function (id, type, row) {
+                                return `
+            <div class="d-flex gap-2">
+                <a href="/ProductionMeeting/KPI_Master_Edit/${id}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-pencil-square"></i>
+                </a>
+
+                <button onclick="openDeleteModal(${id}, '${row.IndicatorName}', '${row.Description}', '${row.UnitName}')"
+                    class="btn btn-sm btn-danger">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+            `;
+                            }
+                        }
+                    ],
+
+                    language: {
+                        emptyTable: "No record found.",
+                        paginate: {
+                            previous: "<i class='bi bi-chevron-left'></i>",
+                            next: "<i class='bi bi-chevron-right'></i>"
+                        }
+                    },
+
+                    initComplete: function () {
+                        $('#kpiTable_filter').appendTo('#kpiTable_filter_placeholder');
+                    }
+                });
+
+            // Search behavior
+            $('.dataTables_filter input')
+                .attr('placeholder', 'Enter Search Text here...')
+                .css('width', '500px')
+                .off('keypress input')
+                .on('input keypress', function (e) {
+                    if (e.keyCode === 13 || this.value === '') {
+                        table.search(this.value).draw();
+                    }
+                });
+        });
+
+
+        function openDeleteModal(id, indicator, desc, unit) {
+
+            document.getElementById("deleteKpiId").value = id;
+            document.getElementById("delIndicator").value = indicator;
+            document.getElementById("delDesc").value = desc;
+            document.getElementById("delUnit").value = unit;
+
+            let modal = new bootstrap.Modal(document.getElementById("deleteModal"));
+            modal.show();
+        }
+
+        function confirmDelete() {
+
+            let id = document.getElementById("deleteKpiId").value;
+
+            fetch('/ProductionMeeting/DeleteKPI?id=' + id, {
+                method: 'POST'
+            })
+                .then(res => res.json())
+                .then(response => {
+
+                    if (response.result) {
+                        toastr.success(response.message);
+
+                        // ? Close modal
+                        bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+
+                        // ? reload table
+                        $('#kpiTable').DataTable().ajax.reload();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    toastr.error("Error deleting record");
+                });
+        }
+
+    </script>
+
+
+}
