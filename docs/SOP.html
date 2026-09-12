@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CLMS Operating Procedure</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --paper: #eef1f5;
+    --surface: #ffffff;
+    --surface-2: #f6f8fa;
+    --ink: #17212c;
+    --ink-soft: #5b6b7e;
+    --ink-faint: #8695a7;
+    --line: #d7dee6;
+    --line-soft: #e6ebf0;
+    --accent: #1d5aad;
+    --accent-ink: #ffffff;
+    --accent-soft: #e7f0fb;
+    --accent-soft-line: #c3d8f0;
+    --caution: #a85d0a;
+    --caution-soft: #fbeedd;
+    --caution-line: #edcfa0;
+    --critical: #c92a2a;
+    --critical-soft: #fbe7e7;
+    --critical-line: #f0bcbc;
+    --st-open: #0d6efd;
+    --st-assigned: #6610f2;
+    --st-progress: #d9720c;
+    --st-hold: #6c757d;
+    --st-resolved: #0f9d70;
+    --st-closed: #198754;
+    --st-reopened: #dc3545;
+    --shadow: 0 1px 2px rgba(23,33,44,0.06), 0 8px 24px -12px rgba(23,33,44,0.12);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #10151c;
+      --surface: #171f28;
+      --surface-2: #1d2631;
+      --ink: #e7edf3;
+      --ink-soft: #9db0c4;
+      --ink-faint: #6d7f93;
+      --line: #2b3644;
+      --line-soft: #232d39;
+      --accent: #6ba3e8;
+      --accent-ink: #0b1420;
+      --accent-soft: #1a2c40;
+      --accent-soft-line: #2c4763;
+      --caution: #e0972f;
+      --caution-soft: #362610;
+      --caution-line: #5c421c;
+      --critical: #f16d6d;
+      --critical-soft: #3a1a1a;
+      --critical-line: #5c2b2b;
+      --st-open: #5b9bea;
+      --st-assigned: #a480f5;
+      --st-progress: #e6923d;
+      --st-hold: #93a1b0;
+      --st-resolved: #3fc797;
+      --st-closed: #4cbd83;
+      --st-reopened: #ef6a6a;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #10151c;
+    --surface: #171f28;
+    --surface-2: #1d2631;
+    --ink: #e7edf3;
+    --ink-soft: #9db0c4;
+    --ink-faint: #6d7f93;
+    --line: #2b3644;
+    --line-soft: #232d39;
+    --accent: #6ba3e8;
+    --accent-ink: #0b1420;
+    --accent-soft: #1a2c40;
+    --accent-soft-line: #2c4763;
+    --caution: #e0972f;
+    --caution-soft: #362610;
+    --caution-line: #5c421c;
+    --critical: #f16d6d;
+    --critical-soft: #3a1a1a;
+    --critical-line: #5c2b2b;
+    --st-open: #5b9bea;
+    --st-assigned: #a480f5;
+    --st-progress: #e6923d;
+    --st-hold: #93a1b0;
+    --st-resolved: #3fc797;
+    --st-closed: #4cbd83;
+    --st-reopened: #ef6a6a;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.6;
+    padding-inline: 20px;
+  }
+  code, .mono, .kbd, td.num, .pill, .doc-id { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+  a { color: var(--accent); }
+  h1, h2, h3, h4 { font-family: 'IBM Plex Sans', sans-serif; font-weight: 700; text-wrap: balance; line-height: 1.25; }
+  h1 { font-size: 1.9rem; margin: 0; }
+  h2 { font-size: 1.35rem; margin: 0 0 4px; color: var(--ink); }
+  h3 { font-size: 1.08rem; margin: 0 0 4px; }
+  p { max-width: 68ch; }
+
+  .shell {
+    max-width: 1180px;
+    margin-inline: auto;
+    padding-block: 28px 80px;
+    display: grid;
+    grid-template-columns: 250px minmax(0,1fr);
+    gap: 36px;
+    align-items: start;
+  }
+
+  /* ---- Title block ---- */
+  .titleblock {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 5px solid var(--accent);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 26px 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .titleblock .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .titleblock .sub {
+    color: var(--ink-soft);
+    margin-top: 6px;
+    font-size: 0.95rem;
+  }
+  .docmeta {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 4px 22px;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    border-left: 1px solid var(--line);
+    padding-left: 20px;
+  }
+  .docmeta dt { color: var(--ink-faint); font-weight: 500; }
+  .docmeta dd { margin: 0; color: var(--ink); font-weight: 600; }
+  .docmeta { display: grid; grid-template-columns: max-content max-content; }
+
+  /* ---- TOC rail ---- */
+  nav.toc {
+    position: sticky;
+    top: 20px;
+    align-self: start;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  nav.toc .toc-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+  nav.toc li { counter-increment: toc; }
+  nav.toc a {
+    display: block;
+    padding: 6px 8px 6px 0;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: 0.86rem;
+    border-left: 2px solid transparent;
+    padding-left: 10px;
+  }
+  nav.toc a::before {
+    content: counter(toc) ".";
+    color: var(--ink-faint);
+    margin-right: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+  }
+  nav.toc a:hover { color: var(--accent); border-left-color: var(--accent-soft-line); background: var(--accent-soft); }
+
+  main { min-width: 0; display: flex; flex-direction: column; gap: 34px; }
+
+  section.doc-section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 24px 26px 26px;
+    box-shadow: var(--shadow);
+    scroll-margin-top: 16px;
+  }
+  section.doc-section > .num {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-soft-line);
+    border-radius: 5px;
+    padding: 1px 7px;
+    margin-bottom: 10px;
+  }
+
+  .lede { color: var(--ink-soft); margin-top: 2px; }
+
+  /* ---- callouts ---- */
+  .callout { border-radius: 8px; padding: 12px 16px; margin: 14px 0; font-size: 0.92rem; border: 1px solid; max-width: 68ch; }
+  .callout .callout-label { text-transform: uppercase; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
+  .callout.note { background: var(--accent-soft); border-color: var(--accent-soft-line); color: var(--ink); }
+  .callout.note .callout-label { color: var(--accent); }
+  .callout.caution { background: var(--caution-soft); border-color: var(--caution-line); color: var(--ink); }
+  .callout.caution .callout-label { color: var(--caution); }
+  .callout.critical { background: var(--critical-soft); border-color: var(--critical-line); color: var(--ink); }
+  .callout.critical .callout-label { color: var(--critical); }
+
+  /* ---- role chips ---- */
+  .roles { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 16px; }
+  .role-chip {
+    font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-soft);
+  }
+  .role-chip.on { background: var(--accent-soft); border-color: var(--accent-soft-line); color: var(--accent); }
+
+  /* ---- steps ---- */
+  ol.steps { list-style: none; margin: 12px 0 0; padding: 0; counter-reset: step; display: flex; flex-direction: column; gap: 12px; }
+  ol.steps li { counter-increment: step; display: grid; grid-template-columns: 26px minmax(0,1fr); gap: 12px; }
+  ol.steps li::before {
+    content: counter(step);
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: var(--accent-ink);
+    font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 0.82rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  ol.steps .step-body p { margin: 0; }
+  ol.steps .step-body .field { color: var(--ink); }
+
+  .kbd, .field, .btn-ref {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.86em;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+  .btn-ref { background: var(--accent-soft); border-color: var(--accent-soft-line); color: var(--accent); font-weight: 600; }
+
+  /* ---- tables ---- */
+  .table-wrap { overflow-x: auto; margin: 14px 0; border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; min-width: 480px; }
+  thead th {
+    background: var(--surface-2); color: var(--ink-soft);
+    text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.05em; font-weight: 600;
+    text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td.center, th.center { text-align: center; }
+  .yes { color: var(--st-closed); font-weight: 700; }
+  .no { color: var(--ink-faint); }
+
+  /* ---- status pill ---- */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 0.76rem; font-weight: 600; padding: 2px 9px; border-radius: 999px;
+    color: #fff; white-space: nowrap;
+  }
+  .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; filter: brightness(1.6); }
+  .pill.open { background: var(--st-open); }
+  .pill.assigned { background: var(--st-assigned); }
+  .pill.progress { background: var(--st-progress); }
+  .pill.hold { background: var(--st-hold); }
+  .pill.resolved { background: var(--st-resolved); }
+  .pill.closed { background: var(--st-closed); }
+  .pill.reopened { background: var(--st-reopened); }
+
+  /* ---- lifecycle flow ---- */
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 0; margin: 18px 0 8px; }
+  .flow .node {
+    padding: 9px 14px; border-radius: 8px; font-weight: 600; font-size: 0.86rem; color: #fff;
+    box-shadow: 0 2px 6px -2px rgba(0,0,0,0.25);
+  }
+  .flow .arrow { color: var(--ink-faint); font-size: 1.1rem; padding: 0 8px; }
+  .flow-branch {
+    display: flex; align-items: center; gap: 10px; margin: 10px 0; padding: 10px 14px;
+    background: var(--surface-2); border: 1px dashed var(--line); border-radius: 8px; font-size: 0.86rem; color: var(--ink-soft);
+    flex-wrap: wrap;
+  }
+  .flow-branch .pill { flex-shrink: 0; }
+
+  /* ---- masters grid ---- */
+  .masters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 14px 0; }
+  .master-card { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--surface-2); }
+  .master-card .idx { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--accent); }
+  .master-card h4 { margin: 4px 0 3px; font-size: 0.94rem; }
+  .master-card p { margin: 0; font-size: 0.8rem; color: var(--ink-soft); max-width: none; }
+
+  /* ---- kpi chips for dashboard section ---- */
+  .kpi-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .kpi-chip { border: 1px solid var(--line); background: var(--surface-2); border-radius: 7px; padding: 6px 12px; font-size: 0.8rem; color: var(--ink-soft); }
+  .kpi-chip b { color: var(--ink); }
+
+  hr.rule { border: none; border-top: 1px solid var(--line); margin: 20px 0; }
+
+  footer.doc-footer {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--ink-faint);
+    font-size: 0.8rem;
+    padding-top: 12px;
+  }
+
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+    nav.toc { position: static; max-height: none; order: 2; }
+    main { order: 1; }
+    .titleblock { flex-direction: column; align-items: flex-start; }
+    .docmeta { border-left: none; padding-left: 0; border-top: 1px solid var(--line); padding-top: 14px; }
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  html { scroll-behavior: smooth; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="titleblock">
+    <div>
+      <div class="eyebrow">Standard Operating Procedure</div>
+      <h1>Call Log &amp; Support Management System</h1>
+      <div class="sub">Operating procedure for IT/MES call handling &mdash; Chakan Plant &amp; Nashik Plant</div>
+    </div>
+    <dl class="docmeta">
+      <dt>Document&nbsp;ID</dt><dd class="doc-id">SOP-CLMS-01</dd>
+      <dt>Version</dt><dd>1.0</dd>
+      <dt>Effective</dt><dd>12-Sep-2026</dd>
+      <dt>Owner</dt><dd>IT/MES Support</dd>
+      <dt>Classification</dt><dd>Internal</dd>
+      <dt>Review cycle</dt><dd>Annual</dd>
+    </dl>
+  </div>
+
+  <nav class="toc" aria-label="Table of contents">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#purpose">Purpose &amp; scope</a></li>
+      <li><a href="#roles">Roles &amp; permissions</a></li>
+      <li><a href="#getting-started">Getting started</a></li>
+      <li><a href="#lifecycle">The call lifecycle</a></li>
+      <li><a href="#create">Creating a call</a></li>
+      <li><a href="#assign">Assigning &amp; handing over</a></li>
+      <li><a href="#progress">Progress, resolve &amp; close</a></li>
+      <li><a href="#reopen">Reopening a call</a></li>
+      <li><a href="#edit">Editing a previous entry</a></li>
+      <li><a href="#lineloss">Line loss &amp; downtime</a></li>
+      <li><a href="#reports">Reports &amp; exports</a></li>
+      <li><a href="#dashboard">Dashboard</a></li>
+      <li><a href="#notifications">Notifications</a></li>
+      <li><a href="#masters">Master configuration</a></li>
+      <li><a href="#admin">User &amp; role administration</a></li>
+      <li><a href="#audit">Audit log</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+      <li><a href="#reference">Reference data</a></li>
+      <li><a href="#history">Document history</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="doc-section" id="purpose">
+      <span class="num">SEC. 1</span>
+      <h2>Purpose &amp; scope</h2>
+      <p class="lede">This SOP describes how plant IT/MES support staff use the Call Log &amp; Support Management System (CLMS) to record, route, and resolve support calls raised across Chakan Plant and Nashik Plant, and how to operate its reporting, master-data, and administration functions.</p>
+      <p>It applies to every person who logs into CLMS: shop-floor supervisors reporting problems, support engineers attending them, support managers routing and overseeing work, and administrators maintaining master data and user accounts.</p>
+    </section>
+
+    <section class="doc-section" id="roles">
+      <span class="num">SEC. 2</span>
+      <h2>Roles &amp; permissions</h2>
+      <p class="lede">CLMS has five fixed roles. Every screen and button in this document is gated by the matrix below &mdash; if a step says "Support Manager", a Support Engineer will not see that control.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Capability</th><th class="center">Admin</th><th class="center">Support Manager</th><th class="center">Support Engineer</th><th class="center">Supervisor</th><th class="center">Viewer</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Manage users / roles</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td></tr>
+            <tr><td>View audit logs</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td></tr>
+            <tr><td>Master configuration</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td></tr>
+            <tr><td>View all calls</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td></tr>
+            <tr><td>Create a call</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td></tr>
+            <tr><td>Edit any call</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td></tr>
+            <tr><td>Edit own assigned call</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td></tr>
+            <tr><td>Assign an engineer</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td></tr>
+            <tr><td>Hand over own call</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td></tr>
+            <tr><td>Start progress / resolve own call</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td><td class="center no">&mdash;</td></tr>
+            <tr><td>Close / reopen a call</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td></tr>
+            <tr><td>Add comment / attachment</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center no">&mdash;</td></tr>
+            <tr><td>View reports &amp; dashboard</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td><td class="center yes">&#10003;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout note"><span class="callout-label">Note</span>These five roles cannot be renamed, added to, or deleted from the app &mdash; every permission check in CLMS is written against these exact names. To change what someone can do, change their role in <span class="field">Administration &rsaquo; Users</span>.</div>
+    </section>
+
+    <section class="doc-section" id="getting-started">
+      <span class="num">SEC. 3</span>
+      <h2>Getting started</h2>
+      <h3>3.1 &mdash; Logging in</h3>
+      <ol class="steps">
+        <li><div class="step-body"><p>Open CLMS in a browser and go to the <span class="field">Login</span> page.</p></div></li>
+        <li><div class="step-body"><p>Enter your <span class="field">Employee ID</span> (not an email address &mdash; e.g. <span class="kbd">EMP001</span>) and your password.</p></div></li>
+        <li><div class="step-body"><p>Click <span class="btn-ref">Login</span>. You'll land on the <span class="field">Dashboard</span>.</p></div></li>
+      </ol>
+      <h3 style="margin-top:18px;">3.2 &mdash; Forgotten password</h3>
+      <p>CLMS has no outbound email service, so self-service reset-by-email isn't available. Contact your Administrator and ask them to reset it from <span class="field">Administration &rsaquo; Users &rsaquo; Reset Password</span>.</p>
+      <h3 style="margin-top:18px;">3.3 &mdash; Finding your way around</h3>
+      <p>The left sidebar is grouped into four sections: <b>Call Management</b> (create/search/list calls), <b>Reports</b>, <b>Master Configuration</b>, and <b>Administration</b>. Which groups you see depends on your role (Section 2).</p>
+    </section>
+
+    <section class="doc-section" id="lifecycle">
+      <span class="num">SEC. 4</span>
+      <h2>The call lifecycle</h2>
+      <p class="lede">Every call moves through a fixed sequence of statuses. CLMS enforces this on the server &mdash; you cannot close a call that hasn't been resolved, or resolve one that hasn't been assigned, regardless of role.</p>
+
+      <div class="flow">
+        <span class="node pill open" style="font-size:0.9rem;">Open</span><span class="arrow">&rarr;</span>
+        <span class="node pill assigned" style="font-size:0.9rem;">Assigned</span><span class="arrow">&rarr;</span>
+        <span class="node pill progress" style="font-size:0.9rem;">In Progress</span><span class="arrow">&rarr;</span>
+        <span class="node pill resolved" style="font-size:0.9rem;">Resolved</span><span class="arrow">&rarr;</span>
+        <span class="node pill closed" style="font-size:0.9rem;">Closed</span>
+      </div>
+
+      <div class="flow-branch"><span class="pill hold">On Hold</span> can be entered from Assigned or In Progress, and returns to In Progress via Start Progress.</div>
+      <div class="flow-branch"><span class="pill reopened">Reopened</span> is the only way back in from Closed &mdash; requires a written reason, then re-enters at In Progress via Start Progress.</div>
+      <div class="flow-branch">A call can be <b>handed over</b> to a different engineer at any point before it is Closed or Cancelled &mdash; this does not change its status.</div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Status</th><th>Meaning</th><th>Who can move it forward</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill open">Open</span></td><td>Just created, not yet assigned to an engineer.</td><td>Admin / Support Manager (Assign)</td></tr>
+            <tr><td><span class="pill assigned">Assigned</span></td><td>An engineer is on the hook but hasn't started work.</td><td>Admin / Support Manager / attending Support Engineer</td></tr>
+            <tr><td><span class="pill progress">In&nbsp;Progress</span></td><td>Actively being worked.</td><td>same as above &mdash; can Resolve or put On Hold</td></tr>
+            <tr><td><span class="pill hold">On&nbsp;Hold</span></td><td>Paused (e.g. waiting on a part or vendor).</td><td>same as above &mdash; Start Progress to resume</td></tr>
+            <tr><td><span class="pill resolved">Resolved</span></td><td>Fix applied, root cause recorded (ICA/PCA).</td><td>Admin / Support Manager / Supervisor (Close)</td></tr>
+            <tr><td><span class="pill closed">Closed</span></td><td>Done. Closing time and total time taken are locked in.</td><td>Admin / Support Manager / Supervisor (Reopen)</td></tr>
+            <tr><td><span class="pill reopened">Reopened</span></td><td>Issue recurred after closure.</td><td>Admin / Support Manager / attending Support Engineer</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="doc-section" id="create">
+      <span class="num">SEC. 5</span>
+      <h2>Creating a call</h2>
+      <div class="roles">
+        <span class="role-chip on">Admin</span><span class="role-chip on">Support Manager</span><span class="role-chip on">Support Engineer</span><span class="role-chip">Supervisor</span><span class="role-chip">Viewer</span>
+      </div>
+      <ol class="steps">
+        <li><div class="step-body"><p>Go to <span class="field">Call Management &rsaquo; Create Call</span>.</p></div></li>
+        <li><div class="step-body"><p>Fill in <span class="field">Location</span>, then <span class="field">Shop</span> (the shop list loads once a location is picked).</p></div></li>
+        <li><div class="step-body"><p>Choose <span class="field">Call Type</span> (User Support / Shopfloor Concern), <span class="field">Module</span>, and optionally <span class="field">Application Type</span>.</p></div></li>
+        <li><div class="step-body"><p>Choose <span class="field">Problem Category</span> and, if relevant, the specific <span class="field">Problem</span> &mdash; this list narrows based on the category and module chosen.</p></div></li>
+        <li><div class="step-body"><p>Pick who reported it (<span class="field">Problem Reported By</span>, from the Employee master), and write the <span class="field">Description &amp; Cause of Problem</span>.</p></div></li>
+        <li><div class="step-body"><p>Set <span class="field">Call Category</span> and <span class="field">Priority</span>.</p></div></li>
+        <li><div class="step-body"><p>If this is a line-loss incident, switch <span class="field">Is Line Loss</span> to <span class="kbd">Yes</span> &mdash; see Section 10 for the fields that unlocks.</p></div></li>
+        <li><div class="step-body"><p>A Support Engineer's <span class="field">Reported Date &amp; Time</span> and <span class="field">Attended By</span> are locked to "now" and "yourself." Admin/Support Manager can back-date and assign to anyone.</p></div></li>
+        <li><div class="step-body"><p>Attach files if needed (PNG, JPG, JPEG, PDF, XLSX, TXT, LOG &mdash; max 10&nbsp;MB each), then click <span class="btn-ref">Save Call</span>, or <span class="btn-ref">Save &amp; Continue</span> to immediately start another.</p></div></li>
+      </ol>
+      <div class="callout note"><span class="callout-label">Note</span>The call number (e.g. <span class="kbd">CALL-2026-000007</span>) is generated automatically and sequentially &mdash; it cannot be set or edited.</div>
+    </section>
+
+    <section class="doc-section" id="assign">
+      <span class="num">SEC. 6</span>
+      <h2>Assigning &amp; handing over</h2>
+      <h3>6.1 &mdash; Assign an engineer</h3>
+      <div class="roles"><span class="role-chip on">Admin</span><span class="role-chip on">Support Manager</span></div>
+      <ol class="steps">
+        <li><div class="step-body"><p>Open the call's <span class="field">Details</span> page and click <span class="btn-ref">Assign</span>.</p></div></li>
+        <li><div class="step-body"><p>Pick the engineer, add an optional remark, and confirm. A call still <span class="pill open">Open</span> moves to <span class="pill assigned">Assigned</span> automatically.</p></div></li>
+      </ol>
+      <h3 style="margin-top:18px;">6.2 &mdash; Hand over to another engineer</h3>
+      <div class="roles"><span class="role-chip on">Admin</span><span class="role-chip on">Support Manager</span><span class="role-chip on">Support Engineer (own call)</span></div>
+      <ol class="steps">
+        <li><div class="step-body"><p>From <span class="field">Details</span>, click <span class="btn-ref">Handover</span>.</p></div></li>
+        <li><div class="step-body"><p>Choose the receiving engineer and write a <span class="field">Reason</span> (required). The call's status does not change &mdash; only who's attending it.</p></div></li>
+      </ol>
+      <div class="callout note"><span class="callout-label">Note</span>Both actions notify the receiving engineer via the bell icon (Section 12).</div>
+    </section>
+
+    <section class="doc-section" id="progress">
+      <span class="num">SEC. 7</span>
+      <h2>Progress, resolve &amp; close</h2>
+      <div class="roles"><span class="role-chip on">Admin</span><span class="role-chip on">Support Manager</span><span class="role-chip on">Support Engineer (own call)</span><span class="role-chip">+ Supervisor for Close</span></div>
+      <h3>7.1 &mdash; Standard path</h3>
+      <ol class="steps">
+        <li><div class="step-body"><p>On <span class="field">Details</span>, click <span class="btn-ref">Start Progress</span> to move Assigned/On Hold/Reopened into <span class="pill progress">In Progress</span>.</p></div></li>
+        <li><div class="step-body"><p>Click <span class="btn-ref">Resolve</span>, fill in <span class="field">ICA / PCA</span> (root cause &amp; corrective action &mdash; required) and any remarks, and confirm.</p></div></li>
+        <li><div class="step-body"><p>An Admin, Support Manager, or Supervisor then clicks <span class="btn-ref">Close</span> on the Resolved call. Closing time and total time taken are recorded automatically and cannot be edited afterward.</p></div></li>
+      </ol>
+      <h3 style="margin-top:18px;">7.2 &mdash; Resolve &amp; Close (fixed on the spot)</h3>
+      <p>Many calls are reported and fixed in the same visit. Rather than clicking Assign, then Resolve, then Close separately, Admin/Support Manager can use one shortcut:</p>
+      <ol class="steps">
+        <li><div class="step-body"><p>On <span class="field">Details</span>, click <span class="btn-ref">Resolve &amp; Close</span> (appears on any call that isn't already Resolved/Closed/Cancelled).</p></div></li>
+        <li><div class="step-body"><p>Enter <span class="field">ICA / PCA</span> and confirm. CLMS assigns the engineer already named at creation (or restarts progress if the call was Reopened), resolves it, and closes it &mdash; one submit, three logged steps, full history preserved.</p></div></li>
+      </ol>
+      <div class="callout note"><span class="callout-label">Note</span>This shortcut needs both Assign's and Close's authority, so it's Admin/Support Manager only &mdash; narrower than either action alone.</div>
+    </section>
+
+    <section class="doc-section" id="reopen">
+      <span class="num">SEC. 8</span>
+      <h2>Reopening a call</h2>
+      <div class="roles"><span class="role-chip on">Admin</span><span class="role-chip on">Support Manager</span><span class="role-chip on">Supervisor</span></div>
+      <ol class="steps">
+        <li><div class="step-body"><p>On a <span class="pill closed">Closed</span> call's <span class="field">Details</span> page, click <span class="btn-ref">Reopen</span>.</p></div></li>
+        <li><div class="step-body"><p>Write a <span class="field">Reason</span> (required) and confirm. The call returns to <span class="pill reopened">Reopened</span>; its Closing Date and Time Taken are cleared until it's resolved again.</p></div></li>
+      </ol>
+      <p>The attending engineer is notified (Section 12) so they know to pick it back up.</p>
+    </section>
+
+    <section class="doc-section" id="edit">
+      <span class="num">SEC. 9</span>
+      <h2>Editing a previous entry</h2>
+      <p class="lede">Use <span class="field">Call Management &rsaquo; Edit Previous Entry</span> to search for and correct a call already logged &mdash; a broader search than "All Calls," with per-field edit tiers:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field tier</th><th>Examples</th><th>Who can edit</th></tr></thead>
+          <tbody>
+            <tr><td>System-controlled</td><td>Call Number, Created By, Status, Time Taken</td><td>Nobody &mdash; always read-only</td></tr>
+            <tr><td>Special permission</td><td>Location, Shop, Module, Reported By/Date, Attended By, Line Loss fields</td><td>Admin / Support Manager only</td></tr>
+            <tr><td>Normal</td><td>Description, Problem Category/Problem, Call Category, Priority, ICA/PCA, Remarks</td><td>Admin / Support Manager / the attending Support Engineer</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout caution"><span class="callout-label">Caution</span>A <span class="pill closed">Closed</span> call is entirely read-only to a Support Engineer &mdash; only Admin/Support Manager can still edit it. Every saved change is written to the call's activity timeline with old &amp; new values.</div>
+    </section>
+
+    <section class="doc-section" id="lineloss">
+      <span class="num">SEC. 10</span>
+      <h2>Line loss &amp; downtime</h2>
+      <p class="lede">When <span class="field">Is Line Loss</span> is set to <span class="kbd">Yes</span> on Create or Edit, four fields become required:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Captures</th></tr></thead>
+          <tbody>
+            <tr><td>Line / Area</td><td>Which line or area stopped producing</td></tr>
+            <tr><td>Downtime Start</td><td>When the line actually stopped</td></tr>
+            <tr><td>Downtime End</td><td>When it resumed (optional while ongoing &mdash; duration then shows as "Ongoing")</td></tr>
+            <tr><td>Affected Vehicles</td><td>How many vehicles/units were lost to the stoppage, as a number (e.g. <span class="kbd">4</span>)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Duration is computed automatically from Start/End and cannot be typed in directly. All four values roll up into the <a href="#reports">Line Loss Report</a>.</p>
+    </section>
+
+    <section class="doc-section" id="reports">
+      <span class="num">SEC. 11</span>
+      <h2>Reports &amp; exports</h2>
+      <div class="roles"><span class="role-chip on">Admin</span><span class="role-chip on">Support Manager</span><span class="role-chip on">Support Engineer</span><span class="role-chip on">Supervisor</span><span class="role-chip on">Viewer</span></div>
+
+      <h3>11.1 &mdash; Call Report</h3>
+      <p>Group totals by <span class="field">Day, Month, Location, Shop, Module, Problem Category,</span> or <span class="field">Status</span>, filtered by date range, location, status and priority. Shows Total / Open / Closed / Line Loss counts and average resolution time per group, with a Grand Total row.</p>
+      <p><span class="btn-ref">Export to Excel</span> and <span class="btn-ref">Export to PDF</span> download the exact filtered/grouped view as a spreadsheet or a landscape PDF; <span class="btn-ref">Print</span> uses the browser's print dialog directly.</p>
+
+      <h3 style="margin-top:16px;">11.2 &mdash; Engineer Performance</h3>
+      <p>Per engineer: total calls, open/in-progress/resolved/closed/reopened counts, average resolution time, critical-priority count, line-loss count, and SLA breaches &mdash; filterable by date range and location.</p>
+
+      <h3 style="margin-top:16px;">11.3 &mdash; SLA Report</h3>
+      <p>Compares each call's actual resolution time against the target in <span class="field">SLA Configuration</span> for its priority, filterable by priority, location, date range, and a "breached only" toggle.</p>
+
+      <h3 style="margin-top:16px;">11.4 &mdash; Line Loss Report</h3>
+      <p>Total incidents, total downtime, and total affected vehicles, broken down by shop and listed incident-by-incident with a link back to each call.</p>
+    </section>
+
+    <section class="doc-section" id="dashboard">
+      <span class="num">SEC. 12</span>
+      <h2>Dashboard</h2>
+      <p class="lede">The landing page after login. Filter by date range, location, module, engineer, or priority; everything below reacts to the filter.</p>
+      <div class="kpi-row">
+        <span class="kpi-chip"><b>Total / Open / Assigned / In&nbsp;Progress / On&nbsp;Hold / Resolved / Closed / Reopened</b> counts</span>
+        <span class="kpi-chip"><b>Critical</b>, <b>Line Loss</b> and <b>SLA Breached</b> counts</span>
+        <span class="kpi-chip"><b>Average Resolution Time</b></span>
+      </div>
+      <p>Charts: Calls by Day, Open vs Closed, Calls by Priority, Calls by Call Type, Calls by Location, Calls by Shop, Calls by Module, Calls by Problem Category, Calls by Engineer, Line Loss Minutes by Shop, and Average Resolution Time by Priority.</p>
+    </section>
+
+    <section class="doc-section" id="notifications">
+      <span class="num">SEC. 13</span>
+      <h2>Notifications</h2>
+      <p class="lede">The bell icon in the top bar checks for updates every 30 seconds and shows an unread count. You're notified when:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Event</th><th>Who's notified</th></tr></thead>
+          <tbody>
+            <tr><td>A call is <b>assigned</b> to you</td><td>The engineer newly assigned</td></tr>
+            <tr><td>A call is <b>handed over</b> to you</td><td>The receiving engineer</td></tr>
+            <tr><td>A call is <b>reopened</b></td><td>Whoever is currently attending it</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Click a notification to mark it read and jump straight to the call, or open <span class="field">View all</span> for the full history and a <span class="btn-ref">Mark all as read</span> action.</p>
+    </section>
+
+    <section class="doc-section" id="masters">
+      <span class="num">SEC. 14</span>
+      <h2>Master configuration</h2>
+      <div class="roles"><span class="role-chip on">Admin</span><span class="role-chip on">Support Manager</span></div>
+      <p class="lede">Twelve master lists drive every dropdown in the app. Records are never hard-deleted &mdash; only deactivated, so history stays intact.</p>
+      <div class="masters-grid">
+        <div class="master-card"><span class="idx">01</span><h4>Locations</h4><p>Plants (e.g. Chakan, Nashik)</p></div>
+        <div class="master-card"><span class="idx">02</span><h4>Shops</h4><p>Shop floors within a location</p></div>
+        <div class="master-card"><span class="idx">03</span><h4>Modules</h4><p>MES/IT modules calls relate to</p></div>
+        <div class="master-card"><span class="idx">04</span><h4>Application Types</h4><p>Desktop, web, hardware, etc.</p></div>
+        <div class="master-card"><span class="idx">05</span><h4>Call Categories</h4><p>Incident, Change Request, etc.</p></div>
+        <div class="master-card"><span class="idx">06</span><h4>Problem Categories</h4><p>Access, Database, Network, etc.</p></div>
+        <div class="master-card"><span class="idx">07</span><h4>Problems</h4><p>Specific problems within a category</p></div>
+        <div class="master-card"><span class="idx">08</span><h4>Engineers</h4><p>Support-staff profiles linked to a login</p></div>
+        <div class="master-card"><span class="idx">09</span><h4>Employees</h4><p>Plant personnel who report problems</p></div>
+        <div class="master-card"><span class="idx">10</span><h4>Statuses</h4><p>Workflow states &amp; their colors</p></div>
+        <div class="master-card"><span class="idx">11</span><h4>Priorities</h4><p>Severity levels &amp; their colors</p></div>
+        <div class="master-card"><span class="idx">12</span><h4>SLA Configuration</h4><p>Resolution-time targets per priority</p></div>
+      </div>
+    </section>
+
+    <section class="doc-section" id="admin">
+      <span class="num">SEC. 15</span>
+      <h2>User &amp; role administration</h2>
+      <div class="roles"><span class="role-chip on">Admin only</span></div>
+      <p>From <span class="field">Administration &rsaquo; Users</span>: create a user (Employee ID, name, designation, location, role, initial password), edit their details or role, deactivate/reactivate, or force-reset a password. You cannot deactivate your own account.</p>
+      <p><span class="field">Administration &rsaquo; Roles</span> is read-only &mdash; it shows user counts per role and the permission matrix from Section 2. Roles are fixed by design and can't be created, edited, or deleted here.</p>
+    </section>
+
+    <section class="doc-section" id="audit">
+      <span class="num">SEC. 16</span>
+      <h2>Audit log</h2>
+      <div class="roles"><span class="role-chip on">Admin only</span></div>
+      <p>Every login, logout, failed login, master-data change, user/role change, and call status change is recorded with who, when, and old/new values. Filter by action type or search by user, entity, or value.</p>
+    </section>
+
+    <section class="doc-section" id="troubleshooting">
+      <span class="num">SEC. 17</span>
+      <h2>Troubleshooting</h2>
+
+      <h3>"I can't close a call"</h3>
+      <p>Close only lights up once a call is <span class="pill resolved">Resolved</span>. If it's still Open or Assigned, either Resolve it first, or use <span class="btn-ref">Resolve &amp; Close</span> (Section 7.2) if Admin/Support Manager.</p>
+
+      <h3 style="margin-top:16px;">"Save Call fails and I land on a blank page"</h3>
+      <p>This usually means the browser tried to follow an HTTPS redirect to a certificate it doesn't trust. Ask your administrator to run:</p>
+      <p><code>dotnet dev-certs https --trust</code></p>
+      <p>and accept the Windows trust prompt that appears.</p>
+
+      <h3 style="margin-top:16px;">"A status/priority badge shows as invisible or white text"</h3>
+      <p>Hard-refresh the page (<span class="kbd">Ctrl</span>+<span class="kbd">F5</span>). This was a one-time issue tied to a Bootstrap version upgrade and is resolved as of this version.</p>
+
+      <h3 style="margin-top:16px;">"Attended By" won't save / Create Call rejects submission</h3>
+      <p>Check that every field marked required in Section 5 is filled &mdash; in particular, Admin/Support Manager must explicitly pick an engineer in <span class="field">Attended By</span> rather than leaving the default blank selection.</p>
+    </section>
+
+    <section class="doc-section" id="reference">
+      <span class="num">SEC. 18</span>
+      <h2>Reference data (development/test environment)</h2>
+      <div class="callout critical"><span class="callout-label">Critical</span>The credential below belongs to the development/test database only. Rotate it &mdash; and every seeded user's password &mdash; before any production go-live.</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Employee ID</th><th>Role</th><th>Password</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">ADMIN001</td><td>Admin</td><td class="mono">Pass@123</td></tr>
+            <tr><td class="mono">EMP001</td><td>Support Engineer (Pranav Darandale)</td><td class="mono">Pass@123</td></tr>
+            <tr><td class="mono">EMP002</td><td>Support Engineer (Abhijeet Kale)</td><td class="mono">Pass@123</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Seeded locations: <span class="kbd">Chakan Plant</span>, <span class="kbd">Nashik Plant 1</span>. Call numbers follow the pattern <span class="kbd">CALL-YYYY-NNNNNN</span>, assigned sequentially and never reused.</p>
+    </section>
+
+    <section class="doc-section" id="history">
+      <span class="num">SEC. 19</span>
+      <h2>Document history</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Version</th><th>Date</th><th>Change</th></tr></thead>
+          <tbody>
+            <tr><td>1.0</td><td>12-Sep-2026</td><td>Initial release &mdash; covers lifecycle, masters, reports &amp; export, notifications, administration.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="doc-footer">SOP-CLMS-01 &middot; v1.0 &middot; IT/MES Support &middot; Internal use only</footer>
+</div>
+</body>
+</html>
