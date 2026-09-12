@@ -328,7 +328,10 @@ namespace CallLogManagementSystem.Controllers
         [Authorize(Policy = PolicyNames.HandoverCall)]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Handover(int id, HandoverViewModel model)
+        // The Details page's handoverModal renders its inputs as "HandoverForm.*" (it's a
+        // sub-object of CallLogDetailsViewModel), so the prefix must match or every field binds
+        // to its default value instead of what was actually submitted.
+        public async Task<IActionResult> Handover(int id, [Bind(Prefix = "HandoverForm")] HandoverViewModel model)
         {
             var callLog = await _context.CallLogs
                 .Include(c => c.AttendedBy)
@@ -392,7 +395,8 @@ namespace CallLogManagementSystem.Controllers
         [Authorize(Policy = PolicyNames.ResolveCall)]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Resolve(int id, ResolveCallViewModel model)
+        // Details' resolveModal renders inputs as "ResolveForm.*" -- same prefix requirement as Handover above.
+        public async Task<IActionResult> Resolve(int id, [Bind(Prefix = "ResolveForm")] ResolveCallViewModel model)
         {
             var callLog = await _context.CallLogs.Include(c => c.AttendedBy).FirstOrDefaultAsync(c => c.Id == id);
             if (callLog == null) return NotFound();
@@ -433,7 +437,8 @@ namespace CallLogManagementSystem.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ResolveAndClose(int id, ResolveCallViewModel model)
+        // Details' resolveCloseModal renders inputs as "ResolveAndCloseForm.*" -- same prefix requirement as Handover/Resolve above.
+        public async Task<IActionResult> ResolveAndClose(int id, [Bind(Prefix = "ResolveAndCloseForm")] ResolveCallViewModel model)
         {
             if (!_currentUser.IsInRole(RoleNames.Admin) && !_currentUser.IsInRole(RoleNames.SupportManager))
             {
@@ -495,7 +500,8 @@ namespace CallLogManagementSystem.Controllers
         [Authorize(Policy = PolicyNames.AssignEngineer)]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Assign(int id, AssignEngineerViewModel model)
+        // Details' assignModal renders inputs as "AssignForm.*" -- same prefix requirement as Handover/Resolve above.
+        public async Task<IActionResult> Assign(int id, [Bind(Prefix = "AssignForm")] AssignEngineerViewModel model)
         {
             if (model.EngineerId <= 0)
             {
@@ -843,8 +849,7 @@ namespace CallLogManagementSystem.Controllers
                 return RedirectToAction(nameof(Create));
             }
 
-            // CallLog/Details doesn't exist until Phase 15 — land on Home for now.
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction(nameof(Details), new { id = callLog.Id });
         }
 
         [Authorize(Policy = PolicyNames.CreateCall)]
